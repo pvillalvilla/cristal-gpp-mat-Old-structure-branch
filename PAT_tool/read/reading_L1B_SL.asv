@@ -1,0 +1,39 @@
+function L1B_SL = reading_L1B_SL(filesBulk)
+% L1B_SL.lat_ku            = double(ncread(filesBulk.filename_L1B_SL, 'lat_ku'));
+% L1B_SL.lat_ka            = double(ncread(filesBulk.filename_L1B_SL, 'lat_ka'));
+% L1B_SL.lon_ku            = double(ncread(filesBulk.filename_L1B_SL, 'lon_ku'));
+% L1B_SL.lon_ka            = double(ncread(filesBulk.filename_L1B_SL, 'lon_ka'));
+% L1B_SL.i_samples_rx1_ku            = double(ncread(filesBulk.filename_L1B_SL, 'i_samples_rx1_ku'));
+% L1B_SL.i_samples_rx1_ka            = double(ncread(filesBulk.filename_L1B_SL, 'i_samples_rx1_ka'));
+% L1B_SL.i_samples_rx2_ku            = double(ncread(filesBulk.filename_L1B_SL, 'i_samples_rx2_ku'));
+% L1B_SL.i_samples_rx2_ka            = double(ncread(filesBulk.filename_L1B_SL, 'i_samples_rx2_ka'));
+% L1B_SL.q_samples_rx1_ku            = double(ncread(filesBulk.filename_L1B_SL, 'q_samples_rx1_ku'));
+% L1B_SL.q_samples_rx1_ka            = double(ncread(filesBulk.filename_L1B_SL, 'q_samples_rx1_ka'));
+% L1B_SL.q_samples_rx2_ku            = double(ncread(filesBulk.filename_L1B_SL, 'q_samples_rx2_ku'));
+% L1B_SL.q_samples_rx2_ka            = double(ncread(filesBulk.filename_L1B_SL, 'q_samples_rx2_ka'));
+% L1B_SL.iq_scale_factor_rx1_ku            = double(ncread(filesBulk.filename_L1B_SL, 'iq_scale_factor_rx1_ku'));
+% L1B_SL.iq_scale_factor_rx1_ka            = double(ncread(filesBulk.filename_L1B_SL, 'iq_scale_factor_rx1_ka'));
+% L1B_SL.iq_scale_factor_rx2_ku            = double(ncread(filesBulk.filename_L1B_SL, 'iq_scale_factor_rx2_ku'));
+% L1B_SL.iq_scale_factor_rx2_ka            = double(ncread(filesBulk.filename_L1B_SL, 'iq_scale_factor_rx2_ka'));
+% L1B_SL.power_waveform_rx1_ku            = double(ncread(filesBulk.filename_L1B_SL, 'power_waveform_rx1_ku'));
+% L1B_SL.power_waveform_rx2_ku            = double(ncread(filesBulk.filename_L1B_SL, 'power_waveform_rx2_ku'));
+% L1B_SL.power_waveform_ka            = double(ncread(filesBulk.filename_L1B_SL, 'power_waveform_ka'));
+
+L1B_SL.lat_ku            = double(ncread(filesBulk.filename_L1B_SL, 'lat_l1b_echo'));
+L1B_SL.lon_ku            = double(ncread(filesBulk.filename_L1B_SL, 'lon_l1b_echo'));
+L1B_SL.i_samples_rx1_ku            = double(ncread(filesBulk.filename_L1B_SL, 'i_samples_rx1_ku'));
+
+L1B_SL.i_samples_rx2_ku            = double(ncread(filesBulk.filename_L1B_SL, 'i_samples_rx2_ku'));
+
+L1B_SL.q_samples_rx1_ku            = double(ncread(filesBulk.filename_L1B_SL, 'q_samples_rx1_ku'));
+
+L1B_SL.q_samples_rx2_ku            = double(ncread(filesBulk.filename_L1B_SL, 'q_samples_rx2_ku'));
+
+L1B_SL.iq_scale_factor_rx1_ku            = double(ncread(filesBulk.filename_L1B_SL, 'scale_factor_ku_l1b_echo'));
+
+% L1B_SL.iq_scale_factor_rx2_ku            = double(ncread(filesBulk.filename_L1B_SL, 'iq_scale_factor_rx2_ku'));
+
+L1B_SL.power_waveform_rx1_ku            = double(ncread(filesBulk.filename_L1B_SL, 'i2q2_meas_ku_l1b_echo'));
+L1B_SL.power_waveform_rx2_ku            = double(ncread(filesBulk.filename_L1B_SL, 'power_waveform_rx2_ku'));
+L1B_SL.power_waveform_ka            = double(ncread(filesBulk.filename_L1B_SL, 'power_waveform_ka'));
+end
