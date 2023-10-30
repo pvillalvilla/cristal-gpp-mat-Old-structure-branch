@@ -90,7 +90,7 @@ while( ~feof(fidXML) )
                 %chd.N_bursts_cycle_sar  = 10;    % Bursts in a cycle
                 % JPLZ: adjust to new chronogram (no holes)
                 chd.N_ku_pulses_burst   = 64;
-                chd.N_bursts_cycle_sar  = 12;    % Bursts in a cycle
+                chd.N_bursts_cycle_sar  = 9;    % Bursts in a cycle
                 chd.SWST                = 2.6037973915238429e-05; % from Lisa email 22/01/2019
             case 'CLOSED_BURST'
                 chd.N_ku_pulses_burst   = 64;

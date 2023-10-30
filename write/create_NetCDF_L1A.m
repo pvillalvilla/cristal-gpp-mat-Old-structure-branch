@@ -30,9 +30,9 @@ date_creation = datestr(now, '_yyyymmddTHHMMSS_');
 L0_date_find = strfind(files.filename_L0,'_201');
 L0_date_find = strfind(files.filename_L0,'_202'); %JPLZ: date for IRIS OB chronogram simulations is 202X
 
-L0_mode_find = strfind(files.filename_L0, 'PIC_SIRS___');
+L0_mode_find = strfind(files.filename_L0, 'S3NGT_SIRS___');
 
-files.filename_L1A = strcat(files.outputPath,'PICE_SIRS_', ...
+files.filename_L1A = strcat(files.outputPath,'S3NGT_SIRS_', ...
                                 files.filename_L0((L0_mode_find(1)+11):(L0_mode_find(end)+15)), '_1A_',...
                                 files.filename_L0((L0_date_find(1)+1):(L0_date_find(1)+30)),...
                                 '_isd','.nc');
@@ -221,11 +221,11 @@ netcdf.putAtt(ncid,id_aux,comment_att,'Altitude of the satellite Centre of Mass'
 
 
 orb_alt_rate_l1a_echo_name = 'alt_rate_l1a_echo';
-id_aux = netcdf.defVar(ncid,orb_alt_rate_l1a_echo_name,int16_type,nb_dimension);
+id_aux = netcdf.defVar(ncid,orb_alt_rate_l1a_echo_name,int32_type,nb_dimension);
 %             netcdf.defVarFill(ncid,id_aux,false,32767);
 netcdf.putAtt(ncid,id_aux,long_name_att,'orbital altitude rate');
 netcdf.putAtt(ncid,id_aux,units_att,meters_per_second_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-2);
+netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-4);
 netcdf.putAtt(ncid,id_aux,add_offset_att,0);
 netcdf.putAtt(ncid,id_aux,comment_att,'Instantaneous altitude rate at the Centre of Mass');
 
