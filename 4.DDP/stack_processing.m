@@ -15,6 +15,15 @@ if cnf.extend_window
 end
 [L1BS_buffer(i_surf_stacked),L1B]   = multilooking          (L1BS_buffer(i_surf_stacked), cnf, chd, cst);
 
+% % Plot stack of beams (non-geocorrected) for each surface
+aa = fft(fftshift(L1BS_buffer(i_surf_stacked).beams_surf,2),[],2);
+imagesc(20*log10(abs(aa)))
+pause(0.1)
+
+% Plot L1B wfm
+% plot(10*log10(L1B.wfm_cor_i2q2))
+% pause(0.1)
+
 if(L1BS_buffer(i_surf_stacked).surface_type_flag == 4)
     PT_stack_performance;
 end
@@ -60,7 +69,7 @@ if(~isempty(indexes_to_remove))
     burst_indexes_in_memory(indexes_to_remove)=[];
     
 end
-[L1BS_buffer(i_surf_stacked)] = empty_L1BS_struct(L1BS_buffer(i_surf_stacked));
+% [L1BS_buffer(i_surf_stacked)] = empty_L1BS_struct(L1BS_buffer(i_surf_stacked));
 
 
 

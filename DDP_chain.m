@@ -88,15 +88,15 @@ end
 
 %% PROCESSING Lasts Bursts
 last_burst=i_burst_focussed;
-if(~exit_gpp) && i_burst_focussed>1
+if(~exit_gpp)
     for i_burst_focussed = last_burst:N_bursts
        
         [L1A_buffer(i_burst_focussed)]      = beam_angles (L1A_buffer(i_burst_focussed),   L1BS_buffer, N_total_surf_loc,i_surf_stacked,i_burst_focussed,N_bursts, cnf, chd, cst);
         [L1A_buffer(i_burst_focussed)]      = azimuth_processing    (L1A_buffer(i_burst_focussed),i_burst_focussed,N_bursts, cnf, chd, cst);
              
         clear nnz_beams
-        nnz_beams=find(L1A_buffer(i_burst_focussed-1).surf_loc_index(:));
-        if( L1A_buffer(i_burst_focussed-1).surf_loc_index(nnz_beams(1))>i_surf_stacked )
+        nnz_beams=find(L1A_buffer(i_burst_focussed).surf_loc_index(:));
+        if( L1A_buffer(i_burst_focussed).surf_loc_index(nnz_beams(1))>i_surf_stacked )
             stack_processing;
             i_surf_stacked = i_surf_stacked +1;
             if(i_surf_stacked>N_surfs_loc_estimated)
@@ -143,9 +143,9 @@ if(cnf.writting_flag(2))
 end
 if(cnf.writting_flag(3))
     netcdf.close(filesBulk.ncid); % close the already open netcdf
-    filesBulk.filename_netCDF_2remove=filesBulk.filename_L1B;
-    %[files] = create_NetCDF_L1B(filesBulk,i_surf_stacked-1,N_total_surf_loc-1, cnf, chd, cst);
-    [filesBulk] = create_NetCDF_L1B(filesBulk,i_surf_stacked-1,N_total_surf_loc-1, cnf, chd, cst,1);
-    resize_NetCDF_L1B(filesBulk,i_surf_stacked-1,cnf,chd,cst);
-    delete(filesBulk.filename_netCDF_2remove);
+%     filesBulk.filename_netCDF_2remove=filesBulk.filename_L1B;
+%     %[files] = create_NetCDF_L1B(filesBulk,i_surf_stacked-1,N_total_surf_loc-1, cnf, chd, cst);
+%     [filesBulk] = create_NetCDF_L1B(filesBulk,i_surf_stacked-1,N_total_surf_loc-1, cnf, chd, cst,1);
+%     resize_NetCDF_L1B(filesBulk,i_surf_stacked-1,cnf,chd,cst);
+%     delete(filesBulk.filename_netCDF_2remove);
 end

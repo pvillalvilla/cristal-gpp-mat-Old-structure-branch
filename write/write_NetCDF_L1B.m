@@ -449,8 +449,8 @@ netcdf.putVar(files.ncid,var_id,i_surf_stacked,z_vel_l1b_echo);
 % netcdf.putVar(files.ncid,var_id,i_surf_stacked,seq_count_l1b_echo);
 
 %----------F. Operating instrument & tracking --------------------------
-var_id = netcdf.inqVarID(files.ncid,'oper_instr_l1b_echo');
-netcdf.putVar(files.ncid,var_id,i_surf_stacked,oper_instr_l1b_echo);
+% var_id = netcdf.inqVarID(files.ncid,'oper_instr_l1b_echo');
+% netcdf.putVar(files.ncid,var_id,i_surf_stacked,oper_instr_l1b_echo);
 
 % var_id = netcdf.inqVarID(files.ncid,'SAR_cnf.mode_l1b_echo');
 % netcdf.putVar(files.ncid,var_id,i_surf_stacked,SAR_cnf.mode_l1b_echo);
@@ -498,8 +498,8 @@ var_id = netcdf.inqVarID(files.ncid,'win_delay_l1b_echo');
 netcdf.putVar(files.ncid,var_id,i_surf_stacked,win_delay_l1b_echo);
 
 %---------- J. AGC and Sigma0 scalings --------------------------------
-% var_id = netcdf.inqVarID(files.ncid,'scale_factor_ku_l1b_echo');
-% netcdf.putVar(files.ncid,var_id,i_surf_stacked,scale_factor_ku_l1b_echo);
+var_id = netcdf.inqVarID(files.ncid,'scale_factor_ku_l1b_echo');
+netcdf.putVar(files.ncid,var_id,i_surf_stacked,scale_factor_ku_l1b_echo);
 
 %---------- K. Stack characterization--------------------------------------
 var_id = netcdf.inqVarID(files.ncid,'nb_stack_l1b_echo');

@@ -1,15 +1,15 @@
-%% 
+%%
 % --------------------------------------------------------
-% Created by isardSAT S.L. 
+% Created by isardSAT S.L.
 % --------------------------------------------------------
-% DeDop 
-% This code implements the CODING & PACKING 
+% DeDop
+% This code implements the CODING & PACKING
 % algorithm for Level-1BS product using Sentinel-3 like format
 % Ref: S3-TN-ESA-SR-0433 SRAL L1A-1BS IODD V1.4
 %
 % ---------------------------------------------------------
 % Objective: Pack variables and write the NETCDF
-% 
+%
 % INPUTs : Workspace
 % OUTPUTs: TM Structure as defined on isardSAT_JasonCS_DPM
 %
@@ -19,15 +19,15 @@
 %            Roger Escola  / isardSAT
 %            Albert Garcia / isardSAT
 % Reviewer:  Monica Roca   / isardSAT
-% Last rev.: Monica Roca   / isardSAT 
-% 
+% Last rev.: Monica Roca   / isardSAT
+%
 % Versions
-% 1.0 
+% 1.0
 % 1.1 Updated time conversion for data between 2010 and 2016 (CR2)
 % 2.0 Transformed to a function. Writting one record
 % 2.1 zp changed to int16 as int8 did not work for zp > 128
 % 2.2 case S3_ filename
-% 2.3 case 'SIN' added 
+% 2.3 case 'SIN' added
 % 2.4 added cnf flag processing_mode_cnf
 % 2.5 Changed in64 for int32 and some int32 for doubles
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,12 +36,12 @@
 function [files] = create_NetCDF_L1B(files, N_surfs_loc_estimated, N_bursts, cnf, chd, cst, resize)
 
 %global N_samples   semi_major_axis_cst flat_coeff_cst;
-global bw_ku_chd 
+% global bw_ku_chd
 % zp_fact_range_cnf  sec_in_day_cst pi_cst
 %global mission mode N_max_beams_stack_chd
 %global compute_L1_stadistics_cnf include_wfms_aligned
 %global optional_ext_file_flag file_ext_string
-%added by EM: 04.10.2016 
+%added by EM: 04.10.2016
 %global ACDC_application_cnf cnf_p_ACDC
 %global netcdf_type
 %global processing_mode_cnf
@@ -51,16 +51,14 @@ date_creation = datestr(now, '_yyyymmddTHHMMSS_');
 
 L1A_date_find = strfind(files.filename_L1A,'_201');
 L1A_date_find = strfind(files.filename_L0,'_202'); %JPLZ: date for IRIS OB chronogram simulations is 202X
-L1A_mode_find = strfind(files.filename_L1A, 'PICE_SIRS_');
+L1A_mode_find = strfind(files.filename_L1A, 'S3NGT_SIRS_');
 
 if (~resize)
-    files.filename_L1B = strcat(files.outputPath,'PICE_SIRS_',...
-        files.filename_L1A((L1A_mode_find(1)+9):(L1A_mode_find(end)+13)), '_1B_',...
+    files.filename_L1B = strcat(files.outputPath,'S3NGT_SIRS_HR_1B_',...
         files.filename_L1A((L1A_date_find(1)+1):(L1A_date_find(1)+30)),...
         '_isd','_long','.nc');
 else
-    files.filename_L1B = strcat(files.outputPath,'PICE_SIRS_',...
-        files.filename_L1A((L1A_mode_find(1)+9):(L1A_mode_find(end)+13)), '_1B_',...
+    files.filename_L1B = strcat(files.outputPath,'S3NGT_SIRS_HR_1B_',...
         files.filename_L1A((L1A_date_find(1)+1):(L1A_date_find(1)+30)),...
         '_isd','.nc');
 end
@@ -79,7 +77,7 @@ ncid = netcdf.create(files.filename_L1B,'CLOBBER');
 %     case 'netcdf4'
 %         ncid = netcdf.create(files.filename_netCDF,'NETCDF4');
 %     case 'netcdf3'
-%         ncid = netcdf.create(files.filename_netCDF,'CLASSIC_MODEL');        
+%         ncid = netcdf.create(files.filename_netCDF,'CLASSIC_MODEL');
 % end
 
 long_name_att = 'long_name';
@@ -106,7 +104,7 @@ netcdf_v4_format = 'netcdf4';
 % space_3D_dimension_size = 3;
 
 nl_dimension = netcdf.defDim(ncid,'nl',chd.N_max_beams_stack);
-nb_dimension = netcdf.defDim(ncid,'nb',N_bursts); % Number of burst/records
+nb_dimension = netcdf.defDim(ncid,'nb',netcdf.getConstant('NC_UNLIMITED')); % Number of burst/records
 np_dimension = netcdf.defDim(ncid,'np',chd.N_pulses_burst); % Number of pulses
 ns_dimension = netcdf.defDim(ncid,'echo_sample_ind',chd.N_samples_sar*cnf.zp_fact_range);
 space_3D_dimension = netcdf.defDim(ncid,'space_3D',3);
@@ -147,31 +145,31 @@ double_type= 'NC_DOUBLE';
 
 
 %----------A. Time variables ----------------------------------------------
-l1_mode_id_name = 'l1_mode_id';
-id_aux      = netcdf.defVar(ncid,l1_mode_id_name,int8_type,nb_dimension);
-            netcdf.putAtt(ncid,id_aux,long_name_att,'L1 mode ID');
-            netcdf.putAtt(ncid,id_aux,comment_att,'L1 Mode Identifier. Each L1A record type has a unique ID, as follows: 0 SAR, 1 SARIn');
+% l1_mode_id_name = 'l1_mode_id';
+% id_aux      = netcdf.defVar(ncid,l1_mode_id_name,int8_type,nb_dimension);
+%             netcdf.putAtt(ncid,id_aux,long_name_att,'L1 mode ID');
+%             netcdf.putAtt(ncid,id_aux,comment_att,'L1 Mode Identifier. Each L1A record type has a unique ID, as follows: 0 SAR, 1 SARIn');
 
 
 
 time_l1b_echo_name = 'time_l1b_echo';
 id_aux      = netcdf.defVar(ncid,time_l1b_echo_name,double_type,nb_dimension);
-            netcdf.putAtt(ncid,id_aux,long_name_att,'UTC ');
-            netcdf.putAtt(ncid,id_aux,units_att,seconds_units);
+netcdf.putAtt(ncid,id_aux,long_name_att,'UTC ');
+netcdf.putAtt(ncid,id_aux,units_att,seconds_units);
 
-seq_count_l1b_echo_name = 'seq_count_l1b_echo';
-id_aux 		= netcdf.defVar(ncid,seq_count_l1b_echo_name,int16_type, nb_dimension);
-            netcdf.putAtt(ncid,id_aux,'FillValue',65535);
-            netcdf.putAtt(ncid,id_aux,long_name_att,'Source Sequence Count: Same as Burst number ');
-            netcdf.putAtt(ncid,id_aux,units_att,number_units);			
-			
+% seq_count_l1b_echo_name = 'seq_count_l1b_echo';
+% id_aux 		= netcdf.defVar(ncid,seq_count_l1b_echo_name,int16_type, nb_dimension);
+%             netcdf.putAtt(ncid,id_aux,'FillValue',65535);
+%             netcdf.putAtt(ncid,id_aux,long_name_att,'Source Sequence Count: Same as Burst number ');
+%             netcdf.putAtt(ncid,id_aux,units_att,number_units);
+
 
 UTC_day_l1b_echo_name = 'UTC_day_l1b_echo';
 id_aux      = netcdf.defVar(ncid,UTC_day_l1b_echo_name,int16_type, nb_dimension);
 %             netcdf.defVarFill(ncid,id_aux,false,32767);
-            netcdf.putAtt(ncid,id_aux,long_name_att,'Days since 2000-01-01 00:00:00.0+00:00 (Ku-band)');
-            netcdf.putAtt(ncid,id_aux,units_att,day_units);
-			netcdf.putAtt(ncid,id_aux,comment_att,'days elapsed since 2000-01-01. To be used to link with L1 and L2 records (time_l1b provides the number of seconds since 2000-01-01).');
+netcdf.putAtt(ncid,id_aux,long_name_att,'Days since 2000-01-01 00:00:00.0+00:00 (Ku-band)');
+netcdf.putAtt(ncid,id_aux,units_att,day_units);
+netcdf.putAtt(ncid,id_aux,comment_att,'days elapsed since 2000-01-01. To be used to link with L1 and L2 records (time_l1b provides the number of seconds since 2000-01-01).');
 
 
 
@@ -226,12 +224,12 @@ netcdf.putAtt(ncid,id_aux,add_offset_att,0);
 netcdf.putAtt(ncid,id_aux,comment_att,'Instantaneous altitude rate at the Centre of Mass');
 
 
-satellite_mispointing_l1b_echo_name = 'satellite_mispointing_l1b_echo';
-id_aux = netcdf.defVar(ncid,satellite_mispointing_l1b_echo_name,int32_type,[space_3D_dimension ,nb_dimension]);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Mispointing angle, measures by STRs: [1] Roll, [2] Pitch, [3] Yaw (Ku-band)');
-netcdf.putAtt(ncid,id_aux,units_att,degrees_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-7);
-netcdf.putAtt(ncid,id_aux,comment_att,'Attitude mispointing, measured by STRs and post-processed by AOCS or by ground facility. The 3 components are given according to the ''space_3D'' dimension: [1] Roll, [2] Pitch, [3] Yaw. This variable includes the "mispointing bias" given by the variable mispointing_bias_ku. Note: nominal pointing is at satellite nadir (antenna perpendicular to ellipsoid) and corresponds to: roll = pitch = yaw = 0');
+% satellite_mispointing_l1b_echo_name = 'satellite_mispointing_l1b_echo';
+% id_aux = netcdf.defVar(ncid,satellite_mispointing_l1b_echo_name,int32_type,[space_3D_dimension ,nb_dimension]);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Mispointing angle, measures by STRs: [1] Roll, [2] Pitch, [3] Yaw (Ku-band)');
+% netcdf.putAtt(ncid,id_aux,units_att,degrees_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-7);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Attitude mispointing, measured by STRs and post-processed by AOCS or by ground facility. The 3 components are given according to the ''space_3D'' dimension: [1] Roll, [2] Pitch, [3] Yaw. This variable includes the "mispointing bias" given by the variable mispointing_bias_ku. Note: nominal pointing is at satellite nadir (antenna perpendicular to ellipsoid) and corresponds to: roll = pitch = yaw = 0');
 
 %----------C. Flag time variables --------------------------------------
 
@@ -274,35 +272,35 @@ netcdf.putAtt(ncid,id_aux,units_att,meters_per_second_units);
 
 %----------E. Navigation Bulletin ------------------------------
 % seq_count_l1b_echo_name = 'seq_count_l1b_echo';
-% id_aux = netcdf.defVar(ncid,seq_count_l1b_echo_name,int32_type,nb_dimension);        
+% id_aux = netcdf.defVar(ncid,seq_count_l1b_echo_name,int32_type,nb_dimension);
 % switch netcdf_type
 %     case 'netcdf4'
-%           id_aux = netcdf.defVar(ncid,seq_count_l1b_echo_name,uint16_type,nb_dimension);        
+%           id_aux = netcdf.defVar(ncid,seq_count_l1b_echo_name,uint16_type,nb_dimension);
 %     case 'netcdf3'
 %            %increase the size
 %           id_aux = netcdf.defVar(ncid,seq_count_l1b_echo_name,int32_type,nb_dimension);
-% end    
+% end
 %             netcdf.defVarFill(ncid,id_aux,false,65535);
 % netcdf.putAtt(ncid,id_aux,long_name_att,'Sequence count');
 % netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-%----------F. Operating instrument & tracking --------------------------
-oper_instr_l1b_echo_name = 'oper_instr_l1b_echo';
-id_aux = netcdf.defVar(ncid,oper_instr_l1b_echo_name,int8_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,127);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Operating instrument');
-netcdf.putAtt(ncid,id_aux,flag_values_att,'0b,1b');
-netcdf.putAtt(ncid,id_aux,flag_desc_att,'A,B (Sentinel-3) / Nominal, Redundant (CryoSat-2)');
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement. For Sentinel-3: Instrument A stands for SRAL Nominal and instrument B stands for SRAL Redundant');    
-
-SAR_mode_l1b_echo_name='SAR_mode_l1b_echo';
-id_aux = netcdf.defVar(ncid,SAR_mode_l1b_echo_name,int8_type, nb_dimension);
-netcdf.putAtt(ncid,id_aux,long_name_att,'SAR mode identifier');
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
-netcdf.putAtt(ncid,id_aux,flag_values_att,'0b,1b,2b (Sentinel-3) / 0b, 1b (Cryosat-2)');
-netcdf.putAtt(ncid,id_aux,flag_desc_att,'closed_loop, open_loop, open_loop_fixed_gain (Sentinel-3) / closed, open (CryoSat-2)');
-
-%---------- G. H0, COR2 and AGC ----------------------------------------
+% %----------F. Operating instrument & tracking --------------------------
+% oper_instr_l1b_echo_name = 'oper_instr_l1b_echo';
+% id_aux = netcdf.defVar(ncid,oper_instr_l1b_echo_name,int8_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,127);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Operating instrument');
+% netcdf.putAtt(ncid,id_aux,flag_values_att,'0b,1b');
+% netcdf.putAtt(ncid,id_aux,flag_desc_att,'A,B (Sentinel-3) / Nominal, Redundant (CryoSat-2)');
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement. For Sentinel-3: Instrument A stands for SRAL Nominal and instrument B stands for SRAL Redundant');
+% 
+% % SAR_mode_l1b_echo_name='SAR_mode_l1b_echo';
+% % id_aux = netcdf.defVar(ncid,SAR_mode_l1b_echo_name,int8_type, nb_dimension);
+% % netcdf.putAtt(ncid,id_aux,long_name_att,'SAR mode identifier');
+% % netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% % netcdf.putAtt(ncid,id_aux,flag_values_att,'0b,1b,2b (Sentinel-3) / 0b, 1b (Cryosat-2)');
+% % netcdf.putAtt(ncid,id_aux,flag_desc_att,'closed_loop, open_loop, open_loop_fixed_gain (Sentinel-3) / closed, open (CryoSat-2)');
+% 
+% %---------- G. H0, COR2 and AGC ----------------------------------------
 h0_applied_l1b_echo_name = 'h0_applied_l1b_echo';
 id_aux = netcdf.defVar(ncid,h0_applied_l1b_echo_name,int32_type, nb_dimension);
 % switch netcdf_type
@@ -324,14 +322,14 @@ netcdf.putAtt(ncid,id_aux,units_att,seconds_3dot125d1024d1e9_units);
 netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
 
-agccode_ku_l1b_echo_name = 'agccode_ku_l1b_echo';
-id_aux = netcdf.defVar(ncid,agccode_ku_l1b_echo_name,int8_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,18446744073709551616);
-netcdf.putAtt(ncid,id_aux,long_name_att,'AGCCODE for Ku band');
-netcdf.putAtt(ncid,id_aux,units_att,dB_units);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
-
-%---------- H. Surface type -----------------------------------------------
+% % agccode_ku_l1b_echo_name = 'agccode_ku_l1b_echo';
+% % id_aux = netcdf.defVar(ncid,agccode_ku_l1b_echo_name,int8_type, nb_dimension);
+% % %             netcdf.defVarFill(ncid,id_aux,false,18446744073709551616);
+% % netcdf.putAtt(ncid,id_aux,long_name_att,'AGCCODE for Ku band');
+% % netcdf.putAtt(ncid,id_aux,units_att,dB_units);
+% % netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% 
+% %---------- H. Surface type -----------------------------------------------
 surf_type_l1b_echo_name = 'surf_type_l1b_echo';
 id_aux = netcdf.defVar(ncid,surf_type_l1b_echo_name,int8_type, nb_dimension);
 %             netcdf.defVarFill(ncid,id_aux,false,127);
@@ -339,8 +337,8 @@ netcdf.putAtt(ncid,id_aux,long_name_att,'Altimeter surface type');
 netcdf.putAtt(ncid,id_aux,flag_values_att,'0,1,2,3');
 netcdf.putAtt(ncid,id_aux,flag_desc_att,'open_ocean or semi-enclosed_seas, enclosed_seas or lakes, continental_ice, land,Transponder');
 netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
-
-%---------- I. Altimeter range and Corrections ----------------------------
+% 
+% %---------- I. Altimeter range and Corrections ----------------------------
 range_ku_l1b_echo_name = 'range_ku_l1b_echo';
 id_aux = netcdf.defVar(ncid,range_ku_l1b_echo_name,int32_type, nb_dimension);
 %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
@@ -349,26 +347,26 @@ netcdf.putAtt(ncid,id_aux,units_att,meters_units);
 netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-4);
 netcdf.putAtt(ncid,id_aux,add_offset_att,700000);
 netcdf.putAtt(ncid,id_aux,comment_att,'Reference range corrected for USO frequency drift and internal path correction');
-
-
-uso_cor_l1b_echo_name = 'uso_cor_l1b_echo';
-id_aux = netcdf.defVar(ncid,uso_cor_l1b_echo_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'USO frequency drift correction');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-4);
-netcdf.putAtt(ncid,id_aux,add_offset_att,0.);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
-
-int_path_cor_ku_l1b_echo_name = 'int_path_cor_ku_l1b_echo';
-id_aux = netcdf.defVar(ncid,int_path_cor_ku_l1b_echo_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Internal path correction for Ku band');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-4);
-netcdf.putAtt(ncid,id_aux,add_offset_att,0.);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
-
+% 
+% 
+% % uso_cor_l1b_echo_name = 'uso_cor_l1b_echo';
+% % id_aux = netcdf.defVar(ncid,uso_cor_l1b_echo_name,int32_type, nb_dimension);
+% % %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% % netcdf.putAtt(ncid,id_aux,long_name_att,'USO frequency drift correction');
+% % netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% % netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-4);
+% % netcdf.putAtt(ncid,id_aux,add_offset_att,0.);
+% % netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% 
+% % int_path_cor_ku_l1b_echo_name = 'int_path_cor_ku_l1b_echo';
+% % id_aux = netcdf.defVar(ncid,int_path_cor_ku_l1b_echo_name,int32_type, nb_dimension);
+% % %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% % netcdf.putAtt(ncid,id_aux,long_name_att,'Internal path correction for Ku band');
+% % netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% % netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-4);
+% % netcdf.putAtt(ncid,id_aux,add_offset_att,0.);
+% % netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% 
 range_rate_l1b_echo_name = 'range_rate_l1b_echo';
 id_aux = netcdf.defVar(ncid,range_rate_l1b_echo_name,int32_type, nb_dimension);
 %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
@@ -377,7 +375,7 @@ netcdf.putAtt(ncid,id_aux,units_att,meters_units);
 netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-3);
 netcdf.putAtt(ncid,id_aux,add_offset_att,0.);
 netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
-
+% 
 win_delay_l1b_echo_name = 'win_delay_l1b_echo';
 id_aux = netcdf.defVar(ncid,win_delay_l1b_echo_name,double_type, nb_dimension);
 %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
@@ -386,8 +384,8 @@ netcdf.putAtt(ncid,id_aux,units_att,seconds_units);
 netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-3);
 netcdf.putAtt(ncid,id_aux,add_offset_att,0.);
 netcdf.putAtt(ncid,id_aux,comment_att,'The window delay');
-
-%---------- J. AGC and Sigma0 scalings --------------------------------
+% 
+% %---------- J. AGC and Sigma0 scalings --------------------------------
 scale_factor_ku_l1b_echo_name = 'scale_factor_ku_l1b_echo';
 id_aux = netcdf.defVar(ncid,scale_factor_ku_l1b_echo_name,int32_type, nb_dimension);
 %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
@@ -396,8 +394,8 @@ netcdf.putAtt(ncid,id_aux,units_att,dB_units);
 netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-2);
 netcdf.putAtt(ncid,id_aux,add_offset_att,0.);
 netcdf.putAtt(ncid,id_aux,comment_att,'This is a scaling factor in order to retrieve sigma-0 from the L1B waveform. It includes antenna gains and geometry satellite - surface. It is not applied to the L1B waveforms');
-
-%---------- K. Stack characterization--------------------------------------
+% 
+% %---------- K. Stack characterization--------------------------------------
 nb_stack_l1b_echo_name = 'nb_stack_l1b_echo';
 id_aux = netcdf.defVar(ncid,nb_stack_l1b_echo_name,int32_type, nb_dimension);
 % switch netcdf_type
@@ -456,7 +454,7 @@ netcdf.putAtt(ncid,id_aux,long_name_att,'Angle of last contributing look  (Ku-ba
 netcdf.putAtt(ncid,id_aux,units_att,rad_units);
 netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-6);
 netcdf.putAtt(ncid,id_aux,comment_att,'Pointing angle of the last contributing look to the L1B waveform');
-
+% 
 if cnf.compute_L1_stadistics
     skew_stack_l1b_echo_name = 'skew_stack_l1b_echo';
     id_aux = netcdf.defVar(ncid,skew_stack_l1b_echo_name,int32_type, nb_dimension);
@@ -514,14 +512,14 @@ if cnf.compute_L1_stadistics
     netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-2);
     netcdf.putAtt(ncid,id_aux,comment_att,'Beam formation quality in percentage');
 end
-
-
-%------------- L. Altimeter engineering variables -------------------------
+% 
+% 
+% %------------- L. Altimeter engineering variables -------------------------
 altimeter_clock_l1b_echo_name = 'altimeter_clock_l1b_echo';
 id_aux = netcdf.defVar(ncid,altimeter_clock_l1b_echo_name,int32_type,nb_dimension);
 netcdf.putAtt(ncid,id_aux,long_name_att,'Altimeter clock (Ku-band)');
 netcdf.putAtt(ncid,id_aux,units_att,Hz_units);
-netcdf.putAtt(ncid,id_aux,add_offset_att,bw_ku_chd);
+netcdf.putAtt(ncid,id_aux,add_offset_att,chd.bw);
 netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-9);
 netcdf.putAtt(ncid,id_aux,comment_att,'This is the actual altimeter clock.');
 
@@ -552,7 +550,7 @@ elseif strcmp(cnf.processing_mode,'SIN')
     
     i2q2_meas_ku_l1b_echo_2_name = 'i2q2_meas_ku_l1b_echo_2';
     id_aux = netcdf.defVar(ncid,i2q2_meas_ku_l1b_echo_2_name,double_type,[ns_dimension nb_dimension]);
-   netcdf.putAtt(ncid,id_aux,long_name_att,'SARIn Power Echo waveform: scaled	0-65535 (Ku-band)');
+    netcdf.putAtt(ncid,id_aux,long_name_att,'SARIn Power Echo waveform: scaled	0-65535 (Ku-band)');
     netcdf.putAtt(ncid,id_aux,units_att,number_units);
     netcdf.putAtt(ncid,id_aux,comment_att,'The SARIn Rx2 L1B Power waveforms is a fully calibrated, high resolution, multilooked waveform. It includes: (a) all calibrations, which have been applied at L1A, (b) SARIn processor configuration according to the L1B processing flags, (c) final scaling, given in the variable ''waveform_scale_factor_l1b_echo'', in order to best fit the waveform into 2 bytes');
     
@@ -579,18 +577,18 @@ end
 
 
 if cnf.include_wfms_aligned
-%EM: 14.04.2016
-i2q2_meas_ku_wdcorr_l1b_echo_name = 'i2q2_meas_ku_wdcorr_l1b_echo';
-id_aux = netcdf.defVar(ncid,i2q2_meas_ku_wdcorr_l1b_echo_name,int32_type,[ns_dimension nb_dimension]);
-% switch netcdf_type
-%     case 'netcdf4'
-%         id_aux = netcdf.defVar(ncid,i2q2_meas_ku_wdcorr_l1b_echo_name,uint16_type,[ns_dimension nb_dimension]);
-%     case 'netcdf3'
-%         id_aux = netcdf.defVar(ncid,i2q2_meas_ku_wdcorr_l1b_echo_name,int32_type,[ns_dimension nb_dimension]);
-% end
-netcdf.putAtt(ncid,id_aux,long_name_att,'SAR	Power Echo waveform aligned surfaces: scaled	0-65535 (Ku-band)');
-netcdf.putAtt(ncid,id_aux,units_att,number_units);
-netcdf.putAtt(ncid,id_aux,comment_att,'The SAR L1B Power waveforms (aligned w.r.t reference surface) is a fully calibrated, high resolution, multilooked waveform. It includes: (a) all calibrations, which have been applied at L1A, (b) SAR processor configuration according to the L1B processing flags, (c) final scaling, given in the variable ''waveform_scale_factor_l1b_echo'', in order to best fit the waveform into 2 bytes. The waveforms have been algined taking into account window delay correction w.r.t first surface.');
+    %EM: 14.04.2016
+    i2q2_meas_ku_wdcorr_l1b_echo_name = 'i2q2_meas_ku_wdcorr_l1b_echo';
+    id_aux = netcdf.defVar(ncid,i2q2_meas_ku_wdcorr_l1b_echo_name,int32_type,[ns_dimension nb_dimension]);
+    % switch netcdf_type
+    %     case 'netcdf4'
+    %         id_aux = netcdf.defVar(ncid,i2q2_meas_ku_wdcorr_l1b_echo_name,uint16_type,[ns_dimension nb_dimension]);
+    %     case 'netcdf3'
+    %         id_aux = netcdf.defVar(ncid,i2q2_meas_ku_wdcorr_l1b_echo_name,int32_type,[ns_dimension nb_dimension]);
+    % end
+    netcdf.putAtt(ncid,id_aux,long_name_att,'SAR	Power Echo waveform aligned surfaces: scaled	0-65535 (Ku-band)');
+    netcdf.putAtt(ncid,id_aux,units_att,number_units);
+    netcdf.putAtt(ncid,id_aux,comment_att,'The SAR L1B Power waveforms (aligned w.r.t reference surface) is a fully calibrated, high resolution, multilooked waveform. It includes: (a) all calibrations, which have been applied at L1A, (b) SAR processor configuration according to the L1B processing flags, (c) final scaling, given in the variable ''waveform_scale_factor_l1b_echo'', in order to best fit the waveform into 2 bytes. The waveforms have been algined taking into account window delay correction w.r.t first surface.');
 end
 
 stack_mask_range_bin_l1b_echo_name = 'stack_mask_range_bin_l1b_echo';
@@ -607,15 +605,15 @@ netcdf.putAtt(ncid,id_aux,long_name_att,'Echo Scale Factor, to convert from [0-6
 netcdf.putAtt(ncid,id_aux,units_att,W_per_count_units);
 netcdf.putAtt(ncid,id_aux,comment_att,'The L1B waveform scaling factor, computed in order to best fit each waveform within 2 bytes. The scaling, needed to convert the L1B waveform into Watt, is applied as follows: power_waveform_watt(ku_rec, Ns) = i2q2_meas_ku_l1b_echo(ku_rec, Ns) * waveform_scale_factor_l1b_echo(ku_rec)');
 
-zero_padding_l1b_echo_name = 'zero_padding_l1b_echo';
-id_aux = netcdf.defVar(ncid,zero_padding_l1b_echo_name,int16_type,[]); %scalar
-netcdf.putAtt(ncid,id_aux,long_name_att,'Oversampling factor used in the range compression (FFT)');
-netcdf.putAtt(ncid,id_aux,units_att,number_units);
-netcdf.putAtt(ncid,id_aux,comment_att,'the ground processor can apply an oversampling factor, providing a waveform_sampling = nominal_sampling / range_oversampling_factor. Note that the altimeter range resolution is fixed and given by the chirp bandwidth');
+% zero_padding_l1b_echo_name = 'zero_padding_l1b_echo';
+% id_aux = netcdf.defVar(ncid,zero_padding_l1b_echo_name,int16_type,[]); %scalar
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Oversampling factor used in the range compression (FFT)');
+% netcdf.putAtt(ncid,id_aux,units_att,number_units);
+% netcdf.putAtt(ncid,id_aux,comment_att,'the ground processor can apply an oversampling factor, providing a waveform_sampling = nominal_sampling / range_oversampling_factor. Note that the altimeter range resolution is fixed and given by the chirp bandwidth');
 
 %EM: 22.09.2016
 %{
-if strcmp(mode,'SIN') && strcmp(mission,'CR2') && strcmp(processing_mode_cnf,'SIN') 
+if strcmp(mode,'SIN') && strcmp(mission,'CR2') && strcmp(processing_mode_cnf,'SIN')
     i2q2_meas_ku_l1b_echo_2_name = 'i2q2_meas_ku_l1b_echo_2';
     id_aux = netcdf.defVar(ncid,i2q2_meas_ku_l1b_echo_2_name,int32_type,[ns_dimension nb_dimension]);
     netcdf.putAtt(ncid,id_aux,long_name_att,'SAR Power Echo waveform 2: scaled	0-65535 (Ku-band)');
@@ -671,93 +669,93 @@ end
 %}
 %------------- N. Geophysical Corrections variables -----------------------
 
-dry_tropo_correction_name = 'dry_tropo_correction_l1b_echo';
-id_aux = netcdf.defVar(ncid,dry_tropo_correction_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Dry Tropospheric Correction');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% dry_tropo_correction_name = 'dry_tropo_correction_l1b_echo';
+% id_aux = netcdf.defVar(ncid,dry_tropo_correction_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Dry Tropospheric Correction');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-wet_tropo_correction_name = 'wet_tropo_correction_l1b_echo';
-id_aux = netcdf.defVar(ncid,wet_tropo_correction_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Wet Tropospheric correction');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% wet_tropo_correction_name = 'wet_tropo_correction_l1b_echo';
+% id_aux = netcdf.defVar(ncid,wet_tropo_correction_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Wet Tropospheric correction');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-inverse_baro_correction_name = 'inverse_baro_correction_l1b_echo';
-id_aux = netcdf.defVar(ncid,inverse_baro_correction_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Inverse Barometric Correction');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% inverse_baro_correction_name = 'inverse_baro_correction_l1b_echo';
+% id_aux = netcdf.defVar(ncid,inverse_baro_correction_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Inverse Barometric Correction');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-Dynamic_atmospheric_correction_name = 'Dynamic_atmospheric_correction_l1b_echo';
-id_aux = netcdf.defVar(ncid,Dynamic_atmospheric_correction_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Dynamic Atmospheric Correction');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% Dynamic_atmospheric_correction_name = 'Dynamic_atmospheric_correction_l1b_echo';
+% id_aux = netcdf.defVar(ncid,Dynamic_atmospheric_correction_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Dynamic Atmospheric Correction');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+%
+% GIM_iono_correction_name = 'GIM_iono_correction_l1b_echo';
+% id_aux = netcdf.defVar(ncid,GIM_iono_correction_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'GIM Ionospheric Correction');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-GIM_iono_correction_name = 'GIM_iono_correction_l1b_echo';
-id_aux = netcdf.defVar(ncid,GIM_iono_correction_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'GIM Ionospheric Correction');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% model_iono_correction_name = 'model_iono_correction_l1b_echo';
+% id_aux = netcdf.defVar(ncid,model_iono_correction_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Model Ionospheric Correction');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-model_iono_correction_name = 'model_iono_correction_l1b_echo';
-id_aux = netcdf.defVar(ncid,model_iono_correction_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Model Ionospheric Correction');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% ocean_equilibrium_tide_name = 'ocean_equilibrium_tide_l1b_echo';
+% id_aux = netcdf.defVar(ncid,ocean_equilibrium_tide_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Ocean Equilibrium Tide');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-ocean_equilibrium_tide_name = 'ocean_equilibrium_tide_l1b_echo';
-id_aux = netcdf.defVar(ncid,ocean_equilibrium_tide_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Ocean Equilibrium Tide');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% long_period_tide_height_name = 'long_period_tide_l1b_echo';
+% id_aux = netcdf.defVar(ncid,long_period_tide_height_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Long Period Ocean Tide');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-long_period_tide_height_name = 'long_period_tide_l1b_echo';
-id_aux = netcdf.defVar(ncid,long_period_tide_height_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Long Period Ocean Tide');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% ocean_loading_tide_name = 'ocean_loading_tide_l1b_echo';
+% id_aux = netcdf.defVar(ncid,ocean_loading_tide_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Ocean Loading Tide');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-ocean_loading_tide_name = 'ocean_loading_tide_l1b_echo';
-id_aux = netcdf.defVar(ncid,ocean_loading_tide_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Ocean Loading Tide');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% solid_earth_tide_name = 'solid_earth_tide_l1b_echo';
+% id_aux = netcdf.defVar(ncid,solid_earth_tide_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Solid Earth Tide');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
-solid_earth_tide_name = 'solid_earth_tide_l1b_echo';
-id_aux = netcdf.defVar(ncid,solid_earth_tide_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Solid Earth Tide');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
-
-geocentric_polar_tide_name = 'geocentric_polar_tide_l1b_echo';
-id_aux = netcdf.defVar(ncid,geocentric_polar_tide_name,int32_type, nb_dimension);
-%             netcdf.defVarFill(ncid,id_aux,false,2147483647);
-netcdf.putAtt(ncid,id_aux,long_name_att,'Geocentric Polar Tide');
-netcdf.putAtt(ncid,id_aux,units_att,meters_units);
-netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
-netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
+% geocentric_polar_tide_name = 'geocentric_polar_tide_l1b_echo';
+% id_aux = netcdf.defVar(ncid,geocentric_polar_tide_name,int32_type, nb_dimension);
+% %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
+% netcdf.putAtt(ncid,id_aux,long_name_att,'Geocentric Polar Tide');
+% netcdf.putAtt(ncid,id_aux,units_att,meters_units);
+% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-3);
+% netcdf.putAtt(ncid,id_aux,comment_att,'Value the closest in time to the reference measurement');
 
 %------------- O. Processing parameters used ------------------------------
 
@@ -799,7 +797,7 @@ if ACDC_application_cnf
     id_aux = netcdf.defVar(ncid,waveform_scale_factor_fit_ACDC_echo_name,float_type,nb_dimension);
     netcdf.putAtt(ncid,id_aux,long_name_att,'ACDC fit Scale Factor, to convert from [0-65535]	to Power at	antenna	flange');
     netcdf.putAtt(ncid,id_aux,units_att,W_per_count_units);
-    netcdf.putAtt(ncid,id_aux,comment_att,'The ACDC fitted waveform scaling factor, computed in order to best fit each waveform within 2 bytes. The scaling, needed to convert the L1B waveform into Watt, is applied as follows: power_waveform_watt(ku_rec, Ns) = i2q2_meas_ku_ACDC_echo(ku_rec, Ns) * waveform_scale_factor_ACDC_echo(ku_rec)');    
+    netcdf.putAtt(ncid,id_aux,comment_att,'The ACDC fitted waveform scaling factor, computed in order to best fit each waveform within 2 bytes. The scaling, needed to convert the L1B waveform into Watt, is applied as follows: power_waveform_watt(ku_rec, Ns) = i2q2_meas_ku_ACDC_echo(ku_rec, Ns) * waveform_scale_factor_ACDC_echo(ku_rec)');
     %scaling fitted ACDC waveform
     waveform_scale_factor_fit_echo_name = 'waveform_scale_factor_fit_echo';
     id_aux = netcdf.defVar(ncid,waveform_scale_factor_fit_echo_name,float_type,nb_dimension);
@@ -868,7 +866,7 @@ if ACDC_application_cnf
     netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-4);
     netcdf.putAtt(ncid,id_aux,add_offset_att,0.0);
     netcdf.putAtt(ncid,id_aux,comment_att,'Pre-retracker ACDC Surface heigth above the elliposid of reference and extracted using the orbital height and the corrected range (retracked range).');
-    %******************** SIGMA0 ******************************************    
+    %******************** SIGMA0 ******************************************
     sig0_ACDC_20_ku_name = 'sig0_ACDC_20_ku';
     id_aux = netcdf.defVar(ncid,sig0_ACDC_20_ku_name,int16_type, nb_dimension);
     %             netcdf.defVarFill(ncid,id_aux,false,32767);
@@ -887,7 +885,7 @@ if ACDC_application_cnf
     netcdf.putAtt(ncid,id_aux,add_offset_att,0.0);
     netcdf.putAtt(ncid,id_aux,comment_att,'Pre-retracker ACDC Backscattering coefficient extracted as the fitted peak power once corrected by the sigma0 scaling factor.');
     
-    %********************* Pu: fitted peak power **************************    
+    %********************* Pu: fitted peak power **************************
     Pu_analytical_20_ku_name = 'Pu_analytical_ACDC_20_ku';
     id_aux = netcdf.defVar(ncid,Pu_analytical_20_ku_name,int16_type, nb_dimension);
     %             netcdf.defVarFill(ncid,id_aux,false,2147483647);
@@ -913,9 +911,9 @@ if ACDC_application_cnf
     netcdf.putAtt(ncid,id_aux,units_att,percent_units);
     netcdf.putAtt(ncid,id_aux,scale_factor_att,1.e-2);
     netcdf.putAtt(ncid,id_aux,add_offset_att,0.0);
-    netcdf.putAtt(ncid,id_aux,comment_att,'Pre-retracker ACDC Pearson correlation coefficient as percentage indicating the goodness of fitting between the real ACDC waveform and the fitted one.');    
+    netcdf.putAtt(ncid,id_aux,comment_att,'Pre-retracker ACDC Pearson correlation coefficient as percentage indicating the goodness of fitting between the real ACDC waveform and the fitted one.');
     
-    %************************ Fitting flag ********************************    
+    %************************ Fitting flag ********************************
     Flag_fitting_ACDC_20_ku_name = 'Flag_fitting_ACDC_20_ku';
     id_aux = netcdf.defVar(ncid,Flag_fitting_ACDC_20_ku_name,int8_type, nb_dimension);
     %             netcdf.defVarFill(ncid,id_aux,false,127);
@@ -928,45 +926,45 @@ end
 %}
 
 %----------  Global Attributes definition -----------------------------------
-%---- attributes inherited from Sentinel-3 product description-------------
-id_aux = netcdf.getConstant('NC_GLOBAL');
-netcdf.putAtt(ncid,id_aux,'creation_time',date_creation);
-netcdf.putAtt(ncid,id_aux,'Conventions',netcdf_v4_format);
-%{
-netcdf.putAtt(ncid,id_aux,'mission_name',mission);
-netcdf.putAtt(ncid,id_aux,'altimeter_sensor_name',altimeter_sensor_name);
-netcdf.putAtt(ncid,id_aux,'gnss_sensor_name',gnss_sensor_name);
-netcdf.putAtt(ncid,id_aux,'doris_sensor_name',doris_sensor_name);
-netcdf.putAtt(ncid,id_aux,'acq_station_name',acq_station_name);
-netcdf.putAtt(ncid,id_aux,'doris_sensor_name',acq_station_name);
-netcdf.putAtt(ncid,id_aux,'first_meas_time',first_meas_time);
-netcdf.putAtt(ncid,id_aux,'last_meas_time',last_meas_time);
-netcdf.putAtt(ncid,id_aux,'xref_altimeter_level0',xref_altimeter_level0);
-netcdf.putAtt(ncid,id_aux,'xref_altimeter_orbit',xref_altimeter_orbit);
-netcdf.putAtt(ncid,id_aux,'xref_doris_USO',xref_doris_USO);
-netcdf.putAtt(ncid,id_aux,'xref_altimeter_ltm_sar_cal1',xref_altimeter_ltm_sar_cal1);
-netcdf.putAtt(ncid,id_aux,'xref_altimeter_ltm_ku_cal2',xref_altimeter_ltm_ku_cal2);
-netcdf.putAtt(ncid,id_aux,'xref_altimeter_ltm_c_cal2',xref_altimeter_ltm_c_cal2);
-netcdf.putAtt(ncid,id_aux,'xref_altimeter_characterisation',xref_altimeter_characterisation);
-netcdf.putAtt(ncid,id_aux,'semi_major_ellipsoid_axis',semi_major_ellipsoid_axis);
-netcdf.putAtt(ncid,id_aux,'ellipsoid_flattening',ellipsoid_flattening);
+% %---- attributes inherited from Sentinel-3 product description-------------
+% id_aux = netcdf.getConstant('NC_GLOBAL');
+% netcdf.putAtt(ncid,id_aux,'creation_time',date_creation);
+% netcdf.putAtt(ncid,id_aux,'Conventions',netcdf_v4_format);
+% %{
+% netcdf.putAtt(ncid,id_aux,'mission_name',mission);
+% netcdf.putAtt(ncid,id_aux,'altimeter_sensor_name',altimeter_sensor_name);
+% netcdf.putAtt(ncid,id_aux,'gnss_sensor_name',gnss_sensor_name);
+% netcdf.putAtt(ncid,id_aux,'doris_sensor_name',doris_sensor_name);
+% netcdf.putAtt(ncid,id_aux,'acq_station_name',acq_station_name);
+% netcdf.putAtt(ncid,id_aux,'doris_sensor_name',acq_station_name);
+% netcdf.putAtt(ncid,id_aux,'first_meas_time',first_meas_time);
+% netcdf.putAtt(ncid,id_aux,'last_meas_time',last_meas_time);
+% netcdf.putAtt(ncid,id_aux,'xref_altimeter_level0',xref_altimeter_level0);
+% netcdf.putAtt(ncid,id_aux,'xref_altimeter_orbit',xref_altimeter_orbit);
+% netcdf.putAtt(ncid,id_aux,'xref_doris_USO',xref_doris_USO);
+% netcdf.putAtt(ncid,id_aux,'xref_altimeter_ltm_sar_cal1',xref_altimeter_ltm_sar_cal1);
+% netcdf.putAtt(ncid,id_aux,'xref_altimeter_ltm_ku_cal2',xref_altimeter_ltm_ku_cal2);
+% netcdf.putAtt(ncid,id_aux,'xref_altimeter_ltm_c_cal2',xref_altimeter_ltm_c_cal2);
+% netcdf.putAtt(ncid,id_aux,'xref_altimeter_characterisation',xref_altimeter_characterisation);
+% netcdf.putAtt(ncid,id_aux,'semi_major_ellipsoid_axis',semi_major_ellipsoid_axis);
+% netcdf.putAtt(ncid,id_aux,'ellipsoid_flattening',ellipsoid_flattening);
 
 %--------------- add the attributes related to intermediate product--------
-netcdf.putAtt(ncid,id_aux,'orbit_phase_code',orbit_phase_code);
-netcdf.putAtt(ncid,id_aux,'orbit_cycle_num',orbit_cycle_num);
-netcdf.putAtt(ncid,id_aux,'orbit_REL_Orbit',orbit_REL_Orbit);
-netcdf.putAtt(ncid,id_aux,'orbit_ABS_Orbit_Start',orbit_ABS_Orbit_Start);
-netcdf.putAtt(ncid,id_aux,'orbit_Rel_Time_ASC_Node_Start',orbit_Rel_Time_ASC_Node_Start);
-netcdf.putAtt(ncid,id_aux,'orbit_ABS_Orbit_Stop',orbit_ABS_Orbit_Stop);
-netcdf.putAtt(ncid,id_aux,'orbit_Rel_Time_ASC_Node_Stop',orbit_Rel_Time_ASC_Node_Stop);
-netcdf.putAtt(ncid,id_aux,'orbit_Equator_Cross_Time',orbit_Equator_Cross_Time);
-netcdf.putAtt(ncid,id_aux,'orbit_Equator_Cross_Long',orbit_Equator_Cross_Long);
-netcdf.putAtt(ncid,id_aux,'orbit_Ascending_Flag',orbit_Ascending_Flag);
+% netcdf.putAtt(ncid,id_aux,'orbit_phase_code',orbit_phase_code);
+% netcdf.putAtt(ncid,id_aux,'orbit_cycle_num',orbit_cycle_num);
+% netcdf.putAtt(ncid,id_aux,'orbit_REL_Orbit',orbit_REL_Orbit);
+% netcdf.putAtt(ncid,id_aux,'orbit_ABS_Orbit_Start',orbit_ABS_Orbit_Start);
+% netcdf.putAtt(ncid,id_aux,'orbit_Rel_Time_ASC_Node_Start',orbit_Rel_Time_ASC_Node_Start);
+% netcdf.putAtt(ncid,id_aux,'orbit_ABS_Orbit_Stop',orbit_ABS_Orbit_Stop);
+% netcdf.putAtt(ncid,id_aux,'orbit_Rel_Time_ASC_Node_Stop',orbit_Rel_Time_ASC_Node_Stop);
+% netcdf.putAtt(ncid,id_aux,'orbit_Equator_Cross_Time',orbit_Equator_Cross_Time);
+% netcdf.putAtt(ncid,id_aux,'orbit_Equator_Cross_Long',orbit_Equator_Cross_Long);
+% netcdf.putAtt(ncid,id_aux,'orbit_Ascending_Flag',orbit_Ascending_Flag);
 %}
 netcdf.endDef(ncid);
 
-var_id = netcdf.inqVarID(ncid,'zero_padding_l1b_echo');
-netcdf.putVar(ncid,var_id,cnf.zp_fact_range);
+% var_id = netcdf.inqVarID(ncid,'zero_padding_l1b_echo');
+% netcdf.putVar(ncid,var_id,cnf.zp_fact_range);
 
 netcdf.close(ncid);
 % time = toc(t6);

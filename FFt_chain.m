@@ -712,6 +712,59 @@ if cnf.trp_flag
     %[~,filename_L1B_FFt]=fileparts(filesBulk.filename_L1B_FFt);
     [~,filename_L1B_FFt]=fileparts(filesBulk.filename_L1BFF_SL); %JPLZ: removed a t
     
+    %% wfm_AC no interp
+%     max_data  = max(20*log10(abs(wfm_AC(:))));
+%     [arclen,~]=distance(lat_surf,lon_surf,ones(1,length(lat_surf))*chd.lat_trp,ones(1,length(lat_surf))*chd.lon_trp,[cst.semi_major_axis sqrt(1-(cst.semi_minor_axis/cst.semi_major_axis).^2)]);
+%     [~,min_dist]=min(arclen);
+%     distances_over_arclengths=arclen;
+%     distances_over_arclengths(1:min_dist-1)=-1.0*distances_over_arclengths(1:min_dist-1);
+%     
+%     slant_range_wrt_TRP_range = ((1:1:chd.N_samples_sar*cnf.zp_fact_range) ...
+%         -((chd.N_samples_sar/2)*cnf.zp_fact_range)) ...
+%         *cst.c/2*chd.T0_nom/cnf.zp_fact_range ...
+%         + alt_sat_surf(TRP_surf_idx)-(win_delay_surf(TRP_surf_idx)*cst.c/2)-chd.alt_trp;
+%     
+%     [~,pos_max] = max(abs(wfm_AC(:)));
+%     [pos_max_along_focused,pos_max_across_focused] = ind2sub(size(wfm_AC),pos_max);
+%     cut_IRF_across = abs(wfm_AC(pos_max_along_focused,:));
+%     cut_IRF_along = abs(wfm_AC(:,pos_max_across_focused));
+%     
+%     figure; plot(20*log10(cut_IRF_across)-max_data)
+%     figure; plot(20*log10(cut_IRF_along)-max_data)
+%     figure; imagesc(20*log10(abs(wfm_AC))-max_data)
+%     colormap('jet'); colorbar; caxis([-70,0]);
+%     
+%     max_data  = max(20*log10(abs(wfm_AC(:))));
+%     max_image = 0.0;
+%     min_image = max_image-60.0;
+%     
+%     figure;
+%     imagesc(slant_range_wrt_TRP_range,distances_over_arclengths,20*log10(abs(wfm_AC))-max_data);
+%     colormap('jet'); colorbar; caxis([min_image,max_image]);
+%     title('Focused Image');
+%     xlabel('Slant range w.r.t TRP position [m]'); ylabel('Along-track distance w.r.t TRP location [m]');
+%     
+%     %
+%     figure;
+%     subplot(1,2,1);
+%     % sidelobe levels
+%     plot(slant_range_wrt_TRP_range,20*log10(cut_IRF_across)-max_data)
+%     %         xlim(min_max_across); ylim([min_image,max_image]);
+%     title(strcat('\delta_{ac}=',num2str(0),{' [m] '}))%,...
+%     %                      'PSL_{l}=',num2str(PSL_rg(1)),{' [dB], '},...
+%     %                      'PSL_{r}=',num2str(PSL_rg(2)),{' [dB] '}));
+%     xlabel('Slant range w.r.t TRP position [m]'); ylabel('[dB]');
+%     subplot(1,2,2);
+%     plot(distances_over_arclengths,20*log10(cut_IRF_along)-max_data)
+%     %         xlim(min_max_along); ylim([min_image,max_image]);
+%     title(strcat('\delta_{al}=',num2str(0),{' [m] '}))%,...
+%     %                      'PSL_{l}=',num2str(PSL_az(1)),{' [dB], '},...
+%     %                      'PSL_{r}=',num2str(PSL_az(2)),{' [dB] '}));
+%     xlabel('Along-track distance w.r.t TRP location [m]'); ylabel('[dB]');
+    
+    
+    
+    %% wfm_AC_interp
     % 2D Re-sampling of the complex matrix
     wfm_AC_interp=interpolsinc_2D(wfm_AC,cnf.FFt.zp_ac_TRP,cnf.FFt.zp_al_TRP);
     %wfm_AC_interp=interpolsinc_2D(wfm_AC_2,cnf.FFt.zp_ac_TRP,cnf.FFt.zp_al_TRP); % For channel 2 in SARIn case
