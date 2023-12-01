@@ -1,29 +1,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % --------------------------------------------------------
-% Created by isardSAT
+% Created by isardSAT 
 % --------------------------------------------------------
-% Polar ICE topography mission
-% aligned with isardSAT_GPPICE_ATBD_v0a
+% Sentinel-3 Next Generation Topography
+% aligned with S3NGT-DS-ISR-0009-0004_ATBD_L1_v2a_20231204
 %
 % ---------------------------------------------------------
-% Objective: Fully focused time domain processing from L1A to L1B
 %
-% Calling:
-% INPUTs:
-% filesBulk:  Structure of the input files including L0 and potentially L1A
-% cnf:        Configuration parameters structure
-% chd:        Characterization parameters structure
-% cst:        Constant parameters structure
-%
-% OUTPUTs:
-%
-%
-% COMMENTS:
-% Current version the L0 from ARESYS is used directly, and the window
-% delays of the pulses are computed within this processor
 % ----------------------------------------------------------
-% Author:    Eduard Makhoul  / isardSAT
-%            Albert Garcia / isardSAT
+% Author:    Albert Garcia  / isardSAT
+%            Pol Villalvilla / isardSAT
 %            Ferran Gibert / isardSAT
 % ----------------------------------------------------------
 % Version record:

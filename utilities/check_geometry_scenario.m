@@ -173,7 +173,12 @@ range_array = (0:step_size:(tracker_range_calibrated-step_size));
 % If needed, fill the rest of the array with values beyond tracker_range
 range_array = [range_array, (tracker_range_calibrated+step_size):step_size:(step_size*(chd.N_samples_sar*cnf.zp_fact_range_uf_cnf))];
 
-figure; imagesc(range_array, 1:N_bursts,20*log10(abs(wfm_AC)))
+figure; imagesc(1:N_bursts,range_array, 20*log10(abs(wfm_AC.')))
+xlabel('Burst')
+ylabel('Range [m]')
+caxis([-210 -110]);
+colormap(colormap_blues)
+
 figure; plot(range_array,(sum(abs(wfm_AC),1)).^2)
 
 %% Estimate coordinates to plot
@@ -201,7 +206,7 @@ grid
 legend('Satellite track','PT')
 
 
-figure; scatter3(lat_sat, lon_sat,altitude_trp*ones(1,1969))
+figure; scatter3(lat_sat, lon_sat,altitude_trp*ones(1,length(lon_sat)))
 hold on; scatter3(lat_sat_trp, lon_sat_trp,altitude_trp)
 xlabel('latitude')
 ylabel('longitude')

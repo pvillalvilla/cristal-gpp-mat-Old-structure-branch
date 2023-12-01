@@ -2,22 +2,14 @@
 % --------------------------------------------------------
 % Created by isardSAT 
 % --------------------------------------------------------
-% Polar ICE topography mission
-% aligned with isardSAT_GPPICE_ATBD_v0a
+% Sentinel-3 Next Generation Topography
+% aligned with S3NGT-DS-ISR-0009-0004_ATBD_L1_v2a_20231204
 %
 % ---------------------------------------------------------
-% Objective: Process from L1A to L1B
-%
-% Calling: 
-% INPUTs:
-%
-%
-% OUTPUTs:
-%
 %
 % ----------------------------------------------------------
 % Author:    Albert Garcia  / isardSAT
-%            Eduard Makhoul / isardSAT
+%            Pol Villalvilla / isardSAT
 %            JP López-Zaragoza / isardSAT
 %---------------------------
 % Version  record

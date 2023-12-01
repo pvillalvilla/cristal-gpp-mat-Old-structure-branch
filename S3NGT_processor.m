@@ -2,26 +2,18 @@
 % --------------------------------------------------------
 % Created by isardSAT 
 % --------------------------------------------------------
-% Polar ICE topography mission
-% aligned with isardSAT_GPPICE_ATBD_v0a
+% Sentinel-3 Next Generation Topography
+% aligned with S3NGT-DS-ISR-0009-0004_ATBD_L1_v2a_20231204
 %
 % ---------------------------------------------------------
-% Objective: Read input parameters and start the chains
-%
-% Calling: GPPICE (input_folder, aux_folder, output_folder, options)
-% INPUTs:
-%
-%
-% OUTPUTs:
-%
 %
 % ----------------------------------------------------------
 % Author:    Albert Garcia  / isardSAT
-%            Eduard Makhoul / isardSAT
+%            Pol Villalvilla / isardSAT
 %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function GPPICE_processor (input_folder, aux_folder, output_folder, options)
+function S3NGT_processor (input_folder, aux_folder, output_folder, options)
 
 if(nargin < 4)
     options.plotting_flag = [0 0 0]; % Stacks, L1B waveforms, track
