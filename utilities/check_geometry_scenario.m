@@ -191,23 +191,49 @@ for kk=1:N_bursts
     altitude(kk) = lla(1,3);
 end
 
-position_TRP = [chd.x_trp, chd.y_trp, chd.z_trp];
-lla = ecef2lla(position_TRP,cst.flat_coeff,cst.semi_major_axis);
-lat_sat_trp = lla(1,1);
-lon_sat_trp = lla(1,2);
-altitude_trp = lla(1,3);
+% position_TRP = [chd.x_trp, chd.y_trp, chd.z_trp];
+% lla = ecef2lla(position_TRP,cst.flat_coeff,cst.semi_major_axis);
+% lat_sat_trp = lla(1,1);
+% lon_sat_trp = lla(1,2);
+% altitude_trp = lla(1,3);
+
+%% TPT grid
+position_TRP = [
+    4.925200166039292e+06 -8.468876832113235e+05 3.949769039546589e+06
+    4.925334734571088e+06 -8.370243758099162e+05 3.951690337479502e+06
+    4.925443678414905e+06 -8.282914425625333e+05 3.953382888216650e+06
+    4.908161401601068e+06 -8.505948414539222e+05 3.969993886047601e+06
+    4.908295938314592e+06 -8.407315737637326e+05 3.971915149136802e+06
+    4.908404889567910e+06 -8.319986681752494e+05 3.973607627226024e+06
+    4.891036955312594e+06 -8.542869729747768e+05 3.990148046873652e+06
+    4.891171458292754e+06 -8.444239180840077e+05 3.992069241100171e+06
+    4.891280415789646e+06 -8.356911934667710e+05 3.993761616870092e+06
+];
 
 figure; plot(lat_sat, lon_sat)
 hold on
-plot(lat_sat_trp, lon_sat_trp,'o')
+for kk=1:9
+    lla = ecef2lla(position_TRP(kk,:),cst.flat_coeff,cst.semi_major_axis);
+    lat_sat_trp = lla(1,1);
+    lon_sat_trp = lla(1,2);
+    altitude_trp = lla(1,3);
+    plot(lat_sat_trp, lon_sat_trp,'ro')
+end
 xlabel('latitude')
 ylabel('longitude')
 grid
-legend('Satellite track','PT')
+legend('Satellite track','PT grid')
 
 
 figure; scatter3(lat_sat, lon_sat,altitude_trp*ones(1,length(lon_sat)))
-hold on; scatter3(lat_sat_trp, lon_sat_trp,altitude_trp)
+hold on; 
+for kk=1:9
+    lla = ecef2lla(position_TRP(kk,:),cst.flat_coeff,cst.semi_major_axis);
+    lat_sat_trp = lla(1,1);
+    lon_sat_trp = lla(1,2);
+    altitude_trp = lla(1,3);
+    scatter3(lat_sat_trp, lon_sat_trp,altitude_trp)
+end
 xlabel('latitude')
 ylabel('longitude')
 zlabel('altitude')
@@ -221,9 +247,9 @@ for kk=1:N_bursts
     y_g(kk) = ecef(1,2);
     z_g(kk) = ecef(1,3);
 end
-
-across_track_d = min(sqrt( (x_g-position_TRP(1)).^2 + (y_g-position_TRP(2)).^2 + (z_g-position_TRP(3)).^2) )
-
+for kk=1:9
+    across_track_d = min(sqrt( (x_g-position_TRP(kk,1)).^2 + (y_g-position_TRP(kk,2)).^2 + (z_g-position_TRP(kk,3)).^2) )
+end
 
 
 

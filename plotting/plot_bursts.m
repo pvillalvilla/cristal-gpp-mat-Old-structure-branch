@@ -1,7 +1,7 @@
 path=pwd;
 file=dir('*.nc');
 % lat=ncread(file(1).name,'lat_85_ku');
-index=1:1969;
+index=1:592;
 
 % tot_gain_ch1_85_ku=ncread(file(1).name,'tot_gain_ch1_85_ku');
 % noise_power_85_ku=ncread(file(1).name,'noise_power_85_ku');
@@ -44,7 +44,7 @@ ylab = get(gca,'YLabel'); set(ylab,'String','Range Bins')
 title(['Burst # ' num2str(i_burst)]);% ' Index ' num2str((index(i_burst))) ]);
 hcb=colorbar; colormap(colormap_blues)
 hcb.Label.String = 'Unscaled Power [dB]';
-caxis([-400 -200]);
+caxis([-240 -80]);
     pause(0.1);
     saveas (h,['Burst_' num2str(i_burst, '%03d') '.png']);
 end 
