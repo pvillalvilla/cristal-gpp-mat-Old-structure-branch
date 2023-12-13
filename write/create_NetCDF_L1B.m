@@ -224,12 +224,12 @@ netcdf.putAtt(ncid,id_aux,add_offset_att,0);
 netcdf.putAtt(ncid,id_aux,comment_att,'Instantaneous altitude rate at the Centre of Mass');
 
 
-% satellite_mispointing_l1b_echo_name = 'satellite_mispointing_l1b_echo';
-% id_aux = netcdf.defVar(ncid,satellite_mispointing_l1b_echo_name,int32_type,[space_3D_dimension ,nb_dimension]);
-% netcdf.putAtt(ncid,id_aux,long_name_att,'Mispointing angle, measures by STRs: [1] Roll, [2] Pitch, [3] Yaw (Ku-band)');
-% netcdf.putAtt(ncid,id_aux,units_att,degrees_units);
-% netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-7);
-% netcdf.putAtt(ncid,id_aux,comment_att,'Attitude mispointing, measured by STRs and post-processed by AOCS or by ground facility. The 3 components are given according to the ''space_3D'' dimension: [1] Roll, [2] Pitch, [3] Yaw. This variable includes the "mispointing bias" given by the variable mispointing_bias_ku. Note: nominal pointing is at satellite nadir (antenna perpendicular to ellipsoid) and corresponds to: roll = pitch = yaw = 0');
+satellite_mispointing_l1b_echo_name = 'satellite_mispointing_l1b_echo';
+id_aux = netcdf.defVar(ncid,satellite_mispointing_l1b_echo_name,int32_type,[space_3D_dimension ,nb_dimension]);
+netcdf.putAtt(ncid,id_aux,long_name_att,'Mispointing angle, measures by STRs: [1] Roll, [2] Pitch, [3] Yaw (Ku-band)');
+netcdf.putAtt(ncid,id_aux,units_att,degrees_units);
+netcdf.putAtt(ncid,id_aux,scale_factor_att,1e-7);
+netcdf.putAtt(ncid,id_aux,comment_att,'Attitude mispointing, measured by STRs and post-processed by AOCS or by ground facility. The 3 components are given according to the ''space_3D'' dimension: [1] Roll, [2] Pitch, [3] Yaw. This variable includes the "mispointing bias" given by the variable mispointing_bias_ku. Note: nominal pointing is at satellite nadir (antenna perpendicular to ellipsoid) and corresponds to: roll = pitch = yaw = 0');
 
 %----------C. Flag time variables --------------------------------------
 

@@ -417,10 +417,10 @@ netcdf.putVar(files.ncid,var_id,i_surf_stacked,alt_l1b_echo);
 
 var_id = netcdf.inqVarID(files.ncid,'orb_alt_rate_l1b_echo');
 netcdf.putVar(files.ncid,var_id,i_surf_stacked,orb_alt_rate_l1b_echo);
-%{
+
 var_id = netcdf.inqVarID(files.ncid,'satellite_mispointing_l1b_sar_echo_ku');
 netcdf.putVar(files.ncid,var_id,[0 i_surf],[3 1],satellite_mispointing_l1b_sar_echo_ku);
-%}
+
 
 %----------C. Flag time variables --------------------------------------
 
