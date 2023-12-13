@@ -21,15 +21,16 @@ plotting_retrackers = 1;
 
 [~,outputPath_size] = size(filesBulk.outputPath);
 
-plots_folder = [filesBulk.outputPath filesBulk.filename_L1B(outputPath_size+1:end-3) '/'];
+% filesBulk.filename_L1B = 'G:/My Drive/S3NGT/codes/S3NGT_TOO4/results/S3NGT_SIRS_HR_1B_0280101T234415_20280101T23442__isd_long.nc';
+plots_folder = [filesBulk.outputPath 'plots/'];
 
 %reading L1B parameters
-cnf.RMC.RMC_on=0;
-if(cnf.RMC.RMC_on)
+cnf.RMC_RMC_on=0;
+if(cnf.RMC_RMC_on)
     [L1B]= reading_L1B_SIN(filesBulk, chd, cnf, cst);
 else
     [L1B]= reading_L1B (filesBulk, chd, cnf, cst);
-    [L1B_FF]= reading_L1B_FF (filesBulk, chd, cnf, cst);
+%     [L1B_FF]= reading_L1B_FF (filesBulk, chd, cnf, cst);
 end
 L1B_written = readanyNETCDF_V1(filesBulk.filename_L1B);
 
@@ -77,6 +78,35 @@ L1B_written = readanyNETCDF_V1(filesBulk.filename_L1B);
 % L1B.scaled_waveforms_ML=L1B.scaled_waveforms_ML(3130:5002,:);
 % L1B.alt_sat_surf_ML=L1B.alt_sat_surf_ML(3130:5002);
 % L1B.range_ku_l1b_echo_ML=L1B.range_ku_l1b_echo_ML(3130:5002);
+
+%%
+
+delta_h = 0;
+                                                      
+%call analytical retracker with the common strcuture from the retracker repository
+set_default_plot;
+[data, cst_p, chd_p]=read_adapt_cristal2retracker(L1B, cnf_L2, cst, chd);
+[ocean_sar] =analytical_retracker_commonstruct(data, cnf_L2, chd_p, cst_p, 'LUT_f0_file',filesBulk.LUT_f0_file,...
+                                                         'LUT_f1_file',filesBulk.LUT_f1_file,...
+                                                         'path_Results',filesBulk.outputPath, ...
+                                                         'L1B_filename',filesBulk.filename_L1B);
+    
+                                                      
+height_ssh        = ((L1B.alt - (L1B.range_ku_l1b_echo-(chd.N_samples_sar/2 - ocean_sar.Epoch.')*chd.T0_nom * cst.c / 2))+ delta_h.');
+
+figure; plot((height_ssh(1:266)),'-bo') %.' - [-1*ones(1,80) -0.697 0*ones(1,70) 0.3173 ones(1,70) 1.332 2*ones(1,43)]),'-bo')
+grid
+grid minor
+xlabel('L1B records')
+ylabel('Range random error [m]')
+legend('Range random error[m]')
+ylim([-0.1 0.3])
+
+range_random_error = std(height_ssh(1:29*3)) / sqrt(29)
+% hold on
+% m = mean(height_ssh(1:80));
+% plot(1:142, ones(1,142)*m,'k--')
+% title('TOO4 range random error')
 
     %% Correct for window delay
     % DDP-HR waveforms

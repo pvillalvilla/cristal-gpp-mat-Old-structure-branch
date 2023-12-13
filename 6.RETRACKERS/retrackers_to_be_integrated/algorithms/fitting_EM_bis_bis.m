@@ -109,12 +109,12 @@ p = inputParser;
 p.addParamValue('LUT_f0_file',{''},@(x)ischar(x));
 p.addParamValue('LUT_f1_file',{''},@(x)ischar(x));
 p.addParamValue('path_Results',{''},@(x)ischar(x));
-p.addParamValue('L1B_filename',{''},@(x)ischar(x));
+% p.addParamValue('L1B_filename',{''},@(x)ischar(x));
 p.parse(varargin{:});
 LUT_f0_file=char(p.Results.LUT_f0_file);
 LUT_f1_file=char(p.Results.LUT_f1_file);
 path_Results=char(p.Results.path_Results);
-L1B_filename=char(p.Results.L1B_filename);
+% L1B_filename=char(p.Results.L1B_filename);
 clear p;
 
 
@@ -892,12 +892,12 @@ end
                 axis([1 length(fit_data) 0 1.0]);                
                 
                 if cnf_p.optional_ext_file_flag
-                    print('-dpng ',[path_Results,'plots/fitted_waveforms/',L1B_filename,'_',cnf_p.file_ext_string,'_L2_fitting_',type_fit,'_record_',num2str(m),'.png']);
+                    print('-dpng ',[path_Results,'plots/fitted_waveforms/','_',cnf_p.file_ext_string,'_L2_fitting_',type_fit,'_record_',num2str(m),'.png']);
                 else
-                    print('-dpng ',[path_Results,'plots/fitted_waveforms/',L1B_filename,'_L2_fitting_',type_fit,'_record_',num2str(m),'.png']);
+                    print('-dpng ',[path_Results,'plots/fitted_waveforms/','L2_fitting_',type_fit,'_record_',num2str(m),'.png']);
                 end
                 disp(strcat('Waveform: ',num2str(m)));
-                save([path_Results,'plots/fitted_waveforms/',L1B_filename,'_L2_fitting_record_',num2str(m),'.mat'],'ml_wav','fit_data','fit_res');
+                save([path_Results,'plots/fitted_waveforms/','L2_fitting_record_',num2str(m),'.mat'],'ml_wav','fit_data','fit_res');
                 set(h_leg,'FontName','Helvetica','FontSize',18)
                 hold off                
             end % end ploting option
