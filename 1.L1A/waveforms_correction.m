@@ -1,101 +1,64 @@
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% --------------------------------------------------------
-% Created by isardSAT S.L.
-% --------------------------------------------------------
-% ---------------------------------------------------------
-% Objective: - Correct every echo of a burst from power and phase variations
-% within a burst using instrumental calibration corrections (CAL1).
-%  -Correct waveforms for the CAL2 provided by instrumental calibration
-%   corrections (CAL4).
-%
-% INPUTs:
-%
-%  -N_ku_pulses_burst_chd                         uc	CHD file (�2.2.1)
-%  -N_samples_sar_chd                           us	CHD file (�2.2.1)
-%  -fai_fine_shift_number_chd                   us	CHD file (�2.2.1)
-%  -gain_corr_instr_sar                     dB	do	Instrument Gain (�7.4)
-%  -burst_phase_array_cor_cal1_sar          rad	do	CAL1 selection (�5.1)
-%  -burst_power_array_cor_cal1_sar_rep      dB	do	CAL1 selection (�5.1)
-%  -wfm_cal2_science_sar                    FFT ss	CAL2 selection (�5.2)
-%  -fai_sar                                 s	do	Preliminary Window Delay (�7.3)
-%  -wfm_sar_reversed                        FFT do  OnBoard reversion (�7.43.1)
-%
-% OUTPUTs:
-%  -burst_phase_array_cor_cal1_sar          rad do
-%  -burst_power_array_cor_cal1_sar          dB  do
-%  -wfm_cal2_science_sar                    FFT do
-%  -wfm_cal_corrected                       FFT do
-%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function wfm_gain_CAL1_CAL2_corrected = waveforms_correction(wfm_cal_gain_UNCORRECTED,netCDF_L0)
 
-function [WFM_COR_OUT] = waveforms_correction (CH1, CH2, CAL1, CAL4, cnf, chd)
 
-% Band selection is selected outside as the input depends on the band
-% ONBRD_REV_OUT and INSTR_GAIN_OUT
+% This algorithm follow DPM S3IPF.DPM.005 
+% ALT_COR_WAV_05 AGC
+% ALT_COR_WAV_02 Phase intra Burst
+% ALT_COR_WAV_03 Power Intra Burst
+% ALT_COR_WAV_04 CAL2
+% The sig0_cal_ku_l1a_echo_sar_ku has been included although it is not applied anywhere in the S3DPM.
 
-%% Apply gain correction
-wfm_gain_cor_ch1 = CH1.wfm_reversed ./ 10^( CH1.instr_gain / 20 );
+% It is called after the L1A record is read, during the adaptation fuction.
+
+% Author:   Albert Garcia-Mondejar / isardSAT
+% v1.0 first version of the algorithm. 
+
+
+
+fixed_gain =    - double(netCDF_L0.data.sig0_cal_ku_l1a_echo_sar_ku) .*double(netCDF_L0.attributes.sig0_cal_ku_l1a_echo_sar_ku.scale_factor)+ ... % dB 'internal calibration correction on Sigma0 for ku band: l1a_echo_sar_ku mode'
+                double(netCDF_L0.data.agc_ku_l1a_echo_sar_ku)      .*double(netCDF_L0.attributes.agc_ku_l1a_echo_sar_ku.scale_factor); % dB corrected AGC for ku band: l1a_echo_sar_ku mode
 
 %% CAL1 Application
-if cnf.flag_cal1_intraburst_corrections
-    wfm_cal1_cor_ch1 = wfm_gain_cor_ch1 .* 10.^( CAL1.burst_power_array_cor / 20 )...
-        .* exp( 1i*CAL1.burst_phase_array_cor );
-    
+if cnf.CAL1p2p_flag
+    CAL1_power                  = double(netCDF_L0.data.burst_power_cor_ku_l1a_echo_sar_ku)    .*double(netCDF_L0.attributes.burst_power_cor_ku_l1a_echo_sar_ku.scale_factor) *ones(1,chd.N_samples_sar); %'ku band burst power corrections (cal1) : l1a_echo_sar_ku mode' %'FFT power unit'
+    CAL1_phase                  = double(netCDF_L0.data.burst_phase_cor_ku_l1a_echo_sar_ku)    .*double(netCDF_L0.attributes.burst_phase_cor_ku_l1a_echo_sar_ku.scale_factor) *ones(1,chd.N_samples_sar);%'ku band burst phase corrections (cal1) : l1a_echo_sar_ku mode' %radians
+
 else
-    wfm_cal1_cor_ch1 = wfm_gain_cor_ch1;
+    CAL1_power      = ones(chd.N_ku_pulses_burst, chd.N_samples_sar);
+    CAL1_phase      = ones(chd.N_ku_pulses_burst, chd.N_samples_sar);
+    
+end 
+if cnf.CAL2_flag
+    CAL2                        = double(netCDF_L0.data.gprw_meas_ku_l1a_echo_sar_ku(:,3))     .*double(netCDF_L0.attributes.gprw_meas_ku_l1a_echo_sar_ku.scale_factor)       *ones(1,chd.N_ku_pulses_burst); %128x3 OPTION 3 chosen as it seems less noisier.  Normalized GPRW (cal2) %'FFT power unit'
+else
+    CAL2 = ones(1,chd.N_samples_sar);
 end
 
-%% SARIn
-if strcmp(CH2.band, 'Ku2')
-    % Apply Gain correction
-    wfm_gain_cor_ch2 = CH2.wfm_reversed ./ 10^( CH2.instr_gain / 20 );
-    
-    % CAL1 Application
-    if cnf.flag_cal1_intraburst_corrections
-        wfm_cal1_cor_ch2 = wfm_gain_cor_ch2 .* 10.^( CAL1.burst_power_array_cor / 20 )...
-            .* exp( 1i*CAL1.burst_phase_array_cor );
-        
-    else
-        wfm_cal1_cor_ch2 = wfm_gain_cor_ch2;
-    end
-    
-    % CAL4 Application
-    phase_difference_corr = CAL4.phase_diff_cor + chd.ext_phase_difference;
-    wfm_cal4_cor = wfm_cal1_cor_ch2 .* exp ( 1i*phase_difference_corr);
-    
-    
-    %% Waveforms alignment
-    samples_pb_chd = zeros(chd.N_pulses_burst,1);
-    samples_pb_chd(:) = 1:chd.N_pulses_burst;
-    if cnf.flag_height_rate_application
-        samples_sar = 1:chd.N_samples_sar;
-    else
-        samples_sar = 1:chd.N_samples_rmc_onboard;
-    end
-    
-    % Computation path delay
-    delta_win_delay = CH2.win_delay - CH1.win_delay;
-    % Range shift frequency channel 2
-    wfm_shifted_ch2 = wfm_cal4_cor .* exp ( 1i*2*cst.pi * 2 *...
-        samples_pb_chd * delta_win_delay * CH2.pri .*...
-        ( samples_sar - length(samples_sar)/2) ./ length(samples_sar) );
-    % Update window delay channel 2 to match channel 1
-    CH2.win_delay = CH1.win_delay;
-    
-    % Output
-    WFM_COR_OUT.wfm_shifted_ch2  = wfm_shifted_ch2;
-    WFM_COR_OUT.win_delay_ch2 = CH2.win_delay;
-    WFM_COR_OUT.band_ch2 = CH1.band;
+wfm_gain_CAL1_corrected     = wfm_cal_gain_UNCORRECTED .* (sqrt(CAL1_power).*exp (1i .* CAL1_phase)) ./ sqrt(10.^(fixed_gain/10));
 
-    
-    
+
+
+%% CAL2 Application
+
+if cnf.CAL2_flag
+    wfm_gain_CAL1_corrected_fft = fftshift(fft(wfm_gain_CAL1_corrected.'));
+    wfm_gain_CAL1_CAL2_corrected_fft = wfm_gain_CAL1_corrected_fft ./ sqrt(CAL2);
+    wfm_gain_CAL1_CAL2_corrected = ifft(fftshift(wfm_gain_CAL1_CAL2_corrected_fft)).';
 else
-    % Output
-    WFM_COR_OUT.wfm_cor = wfm_cal1_cor_ch1;
-    WFM_COR_OUT.band_ch1 = CH1.band;
-
-    
-    
+    wfm_gain_CAL1_CAL2_corrected = wfm_gain_CAL1_corrected;
 end
+% figure; subplot(2,2,1); plot(sum(abs(fftshift(fft(wfm_gain_CAL1_CAL2_corrected.'))).'));
+% hold all; plot(sum(abs(fftshift(fft(wfm_gain_CAL1_corrected.'))).'));
+% hold all; plot(sum(abs(fftshift(fft(wfm_cal_gain_UNCORRECTED.'))).'));
+% legend('CAL1 and CAL2  corrected','CAL1   corrected', 'L1A waveforms uncorrected');
+% 
+% subplot(2,2,2); plot(double(netCDF_L1A.data.burst_power_cor_ku_l1a_echo_sar_ku)    .*double(netCDF_L1A.attributes.burst_power_cor_ku_l1a_echo_sar_ku.scale_factor));
+% figlabels('Pulse Index','FFT units','','CAL1 power',12);
+% subplot(2,2,4); plot(double(netCDF_L1A.data.burst_phase_cor_ku_l1a_echo_sar_ku)    .*double(netCDF_L1A.attributes.burst_phase_cor_ku_l1a_echo_sar_ku.scale_factor));
+% figlabels('Pulse Index','radians','','CAL1 phase',12);
+% subplot(2,2,3); plot(double(netCDF_L1A.data.gprw_meas_ku_l1a_echo_sar_ku(:,3))     .*double(netCDF_L1A.attributes.gprw_meas_ku_l1a_echo_sar_ku.scale_factor));
+% figlabels('Range bin','FFT units','','CAL2',12);
+
+
 
 end

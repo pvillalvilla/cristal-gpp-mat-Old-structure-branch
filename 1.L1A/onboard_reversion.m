@@ -1,160 +1,149 @@
 % ONBOARD REVERSION ALGORITHM
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % --------------------------------------------------------
-% Created by isardSAT S.L.
+% Created by isardSAT S.L. 
 % --------------------------------------------------------
 %
 % ---------------------------------------------------------
 % Objective: - reverse the onboard RMC for the SAR RMC data.
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%  Author:   Roger Escola  / isardSAT
+%            Albert Garcia / isardSAT
+%            Eduard Makhoul / isardSAT
+% Reviewer:  Monica Roca   / isardSAT
+% Last rev.: Monica Roca   / isardSAT (11/09/2013)
+%
+% v1.0 2019/06/10 First version simplified imported from the s6 GPP
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ONBRD_REV_OUT] = onboard_reversion(T0_pre_dat, WIN_DELAY_OUT, ORBIT,ISP,chd,cnf,cst)
 
+function [L1A, chd] = onboard_reversion(L1A,filesBulk, chd,cnf,cst)
 
-%% Band selection
-if( strcmp(ISP.band, 'Ku') )
-    wfm_i = ISP.wfm_i_ku1;
-    wfm_q = ISP.wfm_q_ku1;
-      
-    freq = chd.freq_ku;
-    
-elseif( strcmp(ISP.band, 'Ku2') )
-    wfm_i = ISP.wfm_i_ku2;
-    wfm_q = ISP.wfm_q_ku2;
+rmc_matrix_file= dir([filesBulk.auxPath '*RMC_matrix.mat']);
+load([filesBulk.auxPath rmc_matrix_file.name]);
 
-    freq = chd.freq_ku;
-    
-elseif( strcmp(ISP.band, 'Ka') )
-    wfm_i = ISP.wfm_i_ka;
-    wfm_q = ISP.wfm_q_ka;
-    
-    freq = chd.freq_ka;   
-    
-end
+chd.N_samples_sar   = size(L1A.wfm_cal_gain_corrected,2)*2;
+truncated_zeros1    = zeros(chd.N_ku_pulses_burst,chd.RMC_start_sample-1);
+truncated_zeros2    = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar/2-chd.RMC_start_sample+1);
 
-if( strcmp(ISP.pid, 'RMC') )
-    
-    if( strcmp(ISP.band, 'Ku') )
-        rmc_matrix_i_samples = chd.rmc_matrix_i_samples_ku;
-        rmc_matrix_q_samples = chd.rmc_matrix_q_samples_ku;
-        rmc_weights_i_samples = chd.rmc_weights_i_samples_ku;
-        rmc_weights_q_samples = chd.rmc_weights_q_samples_ku;
+win_delay_sar_ku    = 0;
+win_delay_sar_ku_nom = 0;
+uso_drift = 0;
 
-    elseif( strcmp(ISP.band, 'Ka') )
-        rmc_matrix_i_samples = chd.rmc_matrix_i_samples_ka;
-        rmc_matrix_q_samples = chd.rmc_matrix_q_samples_ka;
-        rmc_weights_i_samples = chd.rmc_weights_i_samples_ka;
-        rmc_weights_q_samples = chd.rmc_weights_q_samples_ka;
+wfm_5               = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar);
+% wfm_6               = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar);
+% wfm_7              = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar);
+% wfm_8               = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar);
+wfm_9               = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar);
+wfm_10               = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar);
+wfm_11               = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar);
+wfm_sar_reversed    = zeros(chd.N_ku_pulses_burst,chd.N_samples_sar);
+alt_rate_wd_corr    = zeros(chd.N_ku_pulses_burst);
+alt_rate_wd_corr_nom = zeros(chd.N_ku_pulses_burst);
 
+%% 1. TRUNCATION reversion
+
+    if(chd.RMC_start_sample==1)
+        wfm_1   = (cat(2,L1A.wfm_cal_gain_corrected(:,1:chd.N_samples_sar/2),truncated_zeros2));
+    else
+        wfm_1   = (cat(2,truncated_zeros1,L1A.wfm_cal_gain_corrected(:,1:chd.N_samples_sar/2),truncated_zeros2));
     end
-    %%
-    wfm_1 = zeros(chd.N_pulses_burst,chd.N_samples_rmc_onboard);
-    
-    samples_pb_chd = zeros(chd.N_pulses_burst,1);
-    samples_pb_chd(:) = 1:chd.N_pulses_burst;
-    samples_rmc_onboard = 1:chd.N_samples_rmc_onboard;
-    samples_sar = 1:chd.N_samples_sar;
-    
-    % 0 <= i_sample_start <= 127
-    % N_samples_rmc = 128
-    % N_samples_sar = 256
-    % N_samples_rmc_onboard = 512
-    
-    %% 0. Group real and imag of I&Q SAR RMC waveforms from ISP
-    wfm_rmc_iq = wfm_i + 1i*wfm_q;
-    wfm_rmc_iq = reshape(wfm_rmc_iq,chd.N_pulses_burst,chd.N_samples_rmc);
-    
-    %% 1. Truncation reversion
-    % assumed that first sample is i_sample_start = 0
-    wfm_1(:,chd.i_sample_start+1:chd.i_sample_start + chd.N_samples_rmc) = wfm_rmc_iq;
-    
-    %% 2. FFT range dimension: frequency to time
-    wfm_2 = fftshift(fft(wfm_1,chd.N_samples_rmc_onboard,2),2);
-    
-    %% 3. RMC correction
-    rmc_matrix = rmc_matrix_i_samples + 1i*rmc_matrix_q_samples;
-    rmc_matrix = reshape(rmc_matrix ,chd.N_pulses_burst,chd.N_samples_rmc_onboard);
-    wfm_3 = wfm_2 .* conj(rmc_matrix);
-    
-    %% 4. IFFT azimuth dimension: doppler beams to pulses
-    wfm_4 = ifft(fftshift(wfm_3,1),chd.N_pulses_burst,1);
-    
-    %% 5. Doppler centroid reversion
-    delta_alt = ISP.vertical_speed.*(ISP.pri);
-    delta_tau = (2.*delta_alt/cst.c);
-    
-    wfm_5 = wfm_4 .* exp( -1i*2*cst.pi * samples_pb_chd *...
-        delta_tau * freq );
-    
-    %% 6. Radial speed correction reversion
-    wfm_6 = wfm_5 .* exp( -1i*2*cst.pi * samples_pb_chd *...
-        delta_tau / T0_pre_dat .*...
-        ( samples_rmc_onboard - chd.N_samples_rmc_onboard/2 ) ./ chd.N_samples_rmc_onboard );
-    
-    %% 7. CAI/FAI reversion
-    wfm_7 = wfm_6 .* exp( 1i*2*cst.pi*( ...
-        ( (WIN_DELAY_OUT.cai_namb).' - WIN_DELAY_OUT.cai_namb(1) ) * chd.cai_cor2_unit_conv...
-        + ( (WIN_DELAY_OUT.fai).' - WIN_DELAY_OUT.fai(1) ) / chd.h0_cor2_unit_conv/chd.T0_h0_unit_conv )...
-        / T0_pre_dat.*...
-        ( samples_rmc_onboard - chd.N_samples_rmc_onboard/2 ) ./ chd.N_samples_rmc_onboard );
-    
-    %% 8. Undo azimuth weighting
-    rmc_weights = (rmc_weights_i_samples + 1i*rmc_weights_q_samples).';
-    wfm_8 = wfm_7 ./ rmc_weights;
-    
-    %% 9. IFFT range dimension: time to frequency
-    wfm_9 = circshift( fliplr(wfm_8) , 1 , 2 );
-    wfm_9 = 1/chd.N_samples_rmc_onboard * wfm_9(:,1:2:chd.N_samples_rmc_onboard);
-
-else % RAW
-    wfm_9 = reshape( wfm_i + 1i*wfm_q, chd.N_pulses_burst , chd.N_samples_rmc_onboard );
-    
-end
-
-%%
-if cnf.flag_height_rate_application
-    
-    %% 10. CAI/FAI re-reversion
-    wfm_10 = wfm_9 .* exp( 1i*2*cst.pi*( ...
-        ( (WIN_DELAY_OUT.cai_namb).' - WIN_DELAY_OUT.cai_namb(1) ) * chd.cai_cor2_unit_conv...
-        + ( (WIN_DELAY_OUT.fai).' - WIN_DELAY_OUT.fai(1)) / chd.h0_cor2_unit_conv/chd.T0_h0_unit_conv )...
-        / T0_pre_dat...
-        .* ( samples_sar - chd.N_samples_sar ) ./ chd.N_samples_sar );
-    
-    % Now pulses have same window delay
-    
-    %% 11. Altitude rate application
-    wfm_reversed = wfm_10 .* exp( 1i*2*cst.pi * 2 * ORBIT.alt_rate_sar_sat * samples_pb_chd .*...
-        ISP.pri / cst.c / T0_pre_dat .* ...
-        ( samples_sar - chd.N_samples_sar/2) ./ chd.N_samples_sar );
-    
-    %% 12. Window delay update
-    alt_rate_wd_corr = ORBIT.alt_rate_sar_sat * samples_pb_chd .* ...
-        ISP.pri * 2 / cst.c;
-    alt_rate_wd_corr_nom = ORBIT.alt_rate_sar_sat * samples_pb_chd .* ...
-        ISP.pri * chd.T0_nom / T0_pre_dat * 2 / cst.c;
-    
-    win_delay_updt = WIN_DELAY_OUT.win_delay_ref + mean(alt_rate_wd_corr(:));
-    win_delay_updt_nom = WIN_DELAY_OUT.win_delay_ref_nom + mean(alt_rate_wd_corr_nom(:));
-    
-    uso_drift = win_delay_updt - win_delay_updt_nom;
-    
-else
-    wfm_reversed = wfm_9;
-    uso_drift = WIN_DELAY_OUT.win_delay - WIN_DELAY_OUT.win_delay_nom;
-    % window delays remain the same as output from window_delay.m
-    
-end
 
 
+    
+        %% 2. FFT range dimension: frequency to time
+        %wfm_2(:,:) = fftshift(fft(wfm_1_.').',2); 
+        wfm_2(:,:) = fftshift(fft(wfm_1,chd.N_samples_sar,2),2);
+%         for i_beam=1:size(rmc_matrix,2)
+%             rmc_matrix_(:,i_beam) =  interp1(1: chd.N_samples_sar,   rmc_matrix(:,i_beam) , 1:2: chd.N_samples_sar);
+%         end
+        
+        %% 3. RMC reversion
+        wfm_3 = wfm_2.* (conj(rmc_matrix(1:2:end,:)).');
+        %% 4. IFFT azimuth dimension: doppler beams to pulses
+        wfm_4 = sqrt(chd.N_ku_pulses_burst)*(ifft(fftshift(wfm_3,1)));
+    
+%         for i_pulse = 1:chd.N_ku_pulses_burst
+%             %% 5. Doppler centroid reversion
+%             wfm_5(i_pulse,:) = wfm_4(i_pulse,:) * exp(...
+%                 -1i*2*cst.pi*(i_pulse-1)*delta_tau_isp(i_burst)*...
+%                 T0_sar_pre_dat(i_burst)/(2^22)*chd.freq);
+%             
+            %% 6. Radial speed correction reversion
+%             for i_sample = 1:chd.N_samples_sar
+%                 wfm_6(i_pulse,i_sample) = wfm_5(i_pulse,i_sample)...
+%                     * exp(-1i*2*cst.pi*(i_pulse-1)*delta_tau_isp(i_burst)/(2^22)...
+%                     * (i_sample-1-chd.N_samples_sar/2) / chd.N_samples_sar);
+%             end
+            
+%             %% 7. CAI/FAI reversion
+%             for i_sample = 1:chd.N_samples_sar
+%                 wfm_7(i_pulse,i_sample) = wfm_6(i_pulse,i_sample) ...
+%                     * exp(+1i*2*cst.pi...
+%                     * ((cai_namb_sar(i_pulse)...
+%                     -cai_namb_sar(1))*cai_cor2_unit_conv_chd...
+%                     + fai_sar(i_pulse)...
+%                     -fai_sar(1))...
+%                     / chd.h0_cor2_unit_conv / chd.T0_h0_unit_conv * ...
+%                     (i_sample-1-chd.N_samples_sar/2)/chd.N_samples_sar);
+%             end
+% 
+%             %% 8. Undo azimuth weighting
+%             wfm_8(i_pulse,:)=wfm_7(i_pulse,:)./rmc_weights(i_pulse);
+%             
+%             
+%         end 
+            %% 9. IFFT range dimension: time to frequency
+            L1A.wfm_cal_gain_corrected=[];
+            L1A.wfm_cal_gain_corrected(:,:)= fftshift(ifft(ifft(fftshift(wfm_4.',1),chd.N_samples_sar)),1).'; % aligned with P4 model 4.3
+            %wfm_9(:,:)= (ifft(fftshift(ifft(fftshift(wfm_8.',1)),1))).'; % aligned with P4 model 4.0
+            %wfm_9(:,:)= fftshift(fft(ifft(fftshift(wfm_8.',1))),1).';
 
-%% Output
-ONBRD_REV_OUT.wfm_reversed = wfm_reversed;
-ONBRD_REV_OUT.uso_drift = uso_drift;
-ONBRD_REV_OUT.win_delay_updt = win_delay_updt;
-ONBRD_REV_OUT.band = ISP.band;
-ONBRD_REV_OUT.pid = ISP.pid;
-
-
+%             figure; mesh(abs(fftshift(fft(L1A.wfm_cal_gain_corrected.'),2).')); % aligned with P4 model 4.3
+% 
+    
+    
+    %% 10. ALTITUDE RATE ALIGNMENT
+%     for i_pulse = 1:chd.N_ku_pulses_burst
+%         
+%         %% A. CAI/FAI RE-REVERSION
+%         for i_sample = 1:chd.N_samples_sar
+%             wfm_10(i_pulse,i_sample) = wfm_9(i_pulse,i_sample) ...
+%                 * exp(-1i*2*cst.pi...
+%                 * ((cai_namb_sar(i_pulse)...
+%                 -cai_namb_sar(1))*cai_cor2_unit_conv_chd + ...
+%                 fai_sar(i_pulse)...
+%                 -fai_sar(1))...
+%                 / chd.h0_cor2_unit_conv / chd.T0_h0_unit_conv * ...
+%                 (i_sample-1-chd.N_samples_sar/2)/chd.N_samples_sar);
+%         end   
+%         
+%         %% A_prima CAL-2 application
+%         if cnf.flag_cal2_correction
+%             aux = fftshift(fft(wfm_10(i_pulse,:),chd.N_samples_sar,2),2); % fft along range samples
+%             wfm_11(i_pulse,:)=ifft(fftshift(aux.*wfm_cal2_science_sar,2),chd.N_samples_sar,2);
+%         else
+%             wfm_11(i_pulse,:)=wfm_10(i_pulse,:);
+%         end
+        
+        %% B. ALTITUDE RATE CORRECTION
+%         for i_sample = 1:chd.N_samples_sar
+%                 wfm_sar_reversed(i_pulse,i_sample) = wfm_11(i_pulse,i_sample) ...
+%                     * exp(1i*2*cst.pi*alt_rate_sar_sat(i_burst)*(i_pulse-1)...
+%                     *pri_sar_pre_dat(i_burst) * 2/c_cst / T0_sar_pre_dat(i_burst)...
+%                     * (i_sample-1-chd.N_samples_sar/2)/chd.N_samples_sar);
+%         end
+%         %% 12. Window delay update
+%         alt_rate_wd_corr(i_pulse) = alt_rate_sar_sat(i_burst) *...
+%             (i_pulse-1) * pri_sar_pre_dat(i_burst) * 2/c_cst; % in seconds
+% 
+%         alt_rate_wd_corr_nom(i_pulse) = alt_rate_sar_sat(i_burst) *...
+%             (i_pulse-1) * chd.pri_nom(i_burst) * 2/c_cst; % in seconds
+%     end
+% 
+%     win_delay_sar_ku(i_burst) = win_delay_sar_ku_ref(i_burst) + mean(alt_rate_wd_corr(:));
+%     win_delay_sar_ku_nom(i_burst) = win_delay_sar_ku_ref_nom(i_burst) + mean(alt_rate_wd_corr_nom(:));
+%     uso_drift(i_burst) = win_delay_sar_ku(i_burst) - win_delay_sar_ku_nom(i_burst);
+%    
 
 end

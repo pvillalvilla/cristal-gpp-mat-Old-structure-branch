@@ -1,78 +1,73 @@
 %% FINAL DATATION AND GEOLOCATION ALGORITHM
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % --------------------------------------------------------
-% Created by isardSAT S.L.
+% Created by isardSAT S.L. 
 % --------------------------------------------------------
+% ---------------------------------------------------------
+% Objective: Manage all the data along the SAR-Ku chain. 
+% Author:    Roger Escol�       / isardSAT
+%            Albert Garcia      / isardSAT
+% Reviewer:  Monica Roca        / isardSAT
+% Last rev.: Albert Garcia        / isardSAT (10/06/2019)
+%
+% v1.1 2019/06/10	- Change datation method to include the SWST (commented) 
+%					- Added Geolocation
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-function [FINAL_DAT_OUT] = final_datation (T0_pre_dat, WIN_DELAY_OUT, ATTITUDE, ORBIT, ISP, cnf, chd, cst)
+function [L1A,L1AP] = final_datation (L1A,L1AP, cnf, chd, cst, ORBIT)
 
-%% 1. Centre of Gravity to antenna correction
-
-if(cnf.flag_cog_antenna_datation_correction == 1)
-    x_cog_ant1_corr = chd.x_cog_ant * ( cos(ATTITUDE.pitch_pre_dat) + cos(ATTITUDE.yaw_pre_dat) ) - chd.y_cog_ant * sin(ATTITUDE.yaw_pre_dat) + ...
-        chd.z_cog_ant * sin(ATTITUDE.pitch_pre_dat);
-    x_cog_ant2_corr = chd.x_cog_ant2 * ( cos(ATTITUDE.pitch_pre_dat) + cos(ATTITUDE.yaw_pre_dat) ) + chd.y_cog_ant2 * sin(ATTITUDE.yaw_pre_dat) + ...
-        chd.z_cog_ant2 * sin(ATTITUDE.pitch_pre_dat);
     
-    t_CoG2ant_1_corr = x_cog_ant1_corr / vel_along;
-    t_CoG2ant_2_corr = ( (x_cog_ant1_corr + x_cog_ant2_corr) / 2 ) / vel_along;
+    %% 1. Datation Correction
+    %The propagation delay computed with the window delay
+    delta_prop_delay = L1A.win_delay / 2;
+
+    %% 2. Centre of Gravity to antenna correction
+    %PRI computed with the real altimeter period.
+%     pri_sar_pre_dat = L1A.pri_sar * chd.pri_T0_unit_conv * chd.T0_sar_pre_dat;
+%     L1A.bri_sar = N_pulses_burst * L1A.pri_sar;
     
-end
-
-%% 1. Datation Correction
-% PRI is computed with the real altimeter clock period
-PRI_c = ISP.pri * chd.pri_T0_unit_conv * T0_pre_dat;
-
-if( strcmp(chd.meas_mode, 'OPEN_BURST') )
-    Namb = ISP.ambiguity_order;
-    bri = PRI_c * chd.N_pulses_burst;
-
-elseif( strcmp(chd.meas_mode, 'CLOSED_BURST') )
-    Namb = 0;
-    bri = chd.bri;
+    %The CoG to antenna correction is added. From the calling to the Attitude Selection algorithm, we
+    %have pitch/yaw_pre_dat(0:N_total_bursts_sar_ku_isp(i_ISP)-1) and from the OSV Selection, the satellite's velocity.
+    x_cog_ant_aux  = chd.x_cog_ant * cos(L1A.pitch_sar) + chd.z_cog_ant * sin(L1A.pitch_sar);
+    x_cog_ant_corr = x_cog_ant_aux * cos(L1A.yaw_sar);
+    t_cog_ant_corr = - x_cog_ant_corr / L1A.x_vel_sat_sar;
     
-end
-
-% Band selection
-if( strcmp(ISP.band, 'Ku') )
-    t_cog_ant_corr = t_CoG2ant_1_corr;
+    %% NEED TO ADD ROLL EFFECT
     
-elseif( strcmp(ISP.band, 'Ku2') )
-    t_cog_ant_corr = t_CoG2ant_2_corr;
     
-elseif( strcmp(ISP.band, 'Ka') )
-    t_cog_ant_corr = t_CoG2ant_1_corr;
-    
-end
-
-% Update window delay with altitude rate
-win_delay = WIN_DELAY_OUT.win_delay + t_cog_ant_corr * ORBIT.alt_rate*2/cst.c;
-
-%The propagation delay computed with the window delay
-delta_prop_delay = win_delay / 2;
-
-% burst_prop_delay = 0;
-t_tx =ISP.time0 + chd.tx1 + chd.pulse_length/2;
-
-for i_burst = 0:chd.N_bursts_rc-1
-    for i_pulse = 0:chd.N_pulses_burst-1
-        time_pulse(i_burst+1,i_pulse+1) = t_tx - ...
-            (Namb - i_pulse) * PRI_c + i_burst*bri +...
-            delta_prop_delay + t_cog_ant_corr;
+    %Now the datation is computed again
+%     burst_prop_delay = bri_sar_pre_dat * (burst_sar_isp(i_burst)-1); %this is the propagation of the time stamp along
+    burst_prop_delay = 0;
+    t_rx = L1A.time_rx_1st + chd.tx1_sar + chd.pulse_length/2 + burst_prop_delay;
+    for i_pulse = 1:chd.N_pulses_burst
+        L1AP.time_sar_ku_pre_dat_pulse(i_pulse) =...
+            t_rx + i_pulse* L1A.pri_sar ...
+            - delta_prop_delay + t_cog_ant_corr;
     end
-end
+    
+    %% 3. Datation averaging
+     %L1A.time = mean(L1AP.time_sar_ku_pre_dat_pulse(1+chd.N_cal_pulses_burst+chd.N_c_pulses_burst:chd.N_pulses_burst));
+%      L1A.time = L1A.time_rx_1st - ((chd.SWST+L1A.ambiguity_order_sar_isp*L1A.pri_sar) - (chd.N_pulses_burst-1)*L1A.pri_sar)/2;
 
-%% Averaging
-t_surf = mean(time_pulse,2);
+    %% 4. GEOLOCATION
+    N_bursts_interpol = 8;
+    
+    start_burst = max(1,L1A.burst-N_bursts_interpol);
+    end_burst = min(start_burst+N_bursts_interpol,length(ORBIT.time));
+    L1A.x_sar_sat       = spline (ORBIT.time(start_burst:end_burst), ORBIT.com_position_vector(1,start_burst:end_burst), L1A.time);
+    L1A.y_sar_sat       = spline (ORBIT.time(start_burst:end_burst), ORBIT.com_position_vector(2,start_burst:end_burst), L1A.time);
+    L1A.z_sar_sat       = spline (ORBIT.time(start_burst:end_burst), ORBIT.com_position_vector(3,start_burst:end_burst), L1A.time);
+    L1A.x_vel_sat_sar   = spline (ORBIT.time(start_burst:end_burst), ORBIT.com_velocity_vector(1,start_burst:end_burst), L1A.time);
+    L1A.alt_rate_sar_sat= spline (ORBIT.time(start_burst:end_burst), ORBIT.alt_rate_sar_sat(start_burst:end_burst), L1A.time);
 
-%% Geolocation
-% Using auxiliary function with time_lrm as inpu
-
-%% Output
-FINAL_DAT_OUT.t_surf = t_surf;
-FINAL_DAT_OUT.band = ISP.band;
-FINAL_DAT_OUT.chd.meas_mode = chd.meas_mode;
+    L1A.y_vel_sat_sar   = spline (ORBIT.time(start_burst:end_burst), ORBIT.com_velocity_vector(2,start_burst:end_burst), L1A.time);
+    L1A.z_vel_sat_sar   = spline (ORBIT.time(start_burst:end_burst), ORBIT.com_velocity_vector(3,start_burst:end_burst), L1A.time);
+    L1A.roll_sar        = spline (ORBIT.time(start_burst:end_burst), ORBIT.roll(start_burst:end_burst), L1A.time);
+    L1A.pitch_sar       = spline (ORBIT.time(start_burst:end_burst), ORBIT.pitch(start_burst:end_burst), L1A.time);
+    L1A.yaw_sar         = spline (ORBIT.time(start_burst:end_burst), ORBIT.yaw(start_burst:end_burst), L1A.time);
+ 
+ 
 
 end

@@ -83,18 +83,18 @@ while(i_burst<=N_bursts)
         %(strcmp(chd.meas_mode,'CLOSED_BURST')) && (i_burst==2||14 26
     end
     
-    if cnf.starting_from_netcdf
-        [L1A,L1AP]          = preliminary_datation_old (L1A, L1AP, cnf, chd, cst);
-        [L1A,L1AP]          = window_delay_old (L1A,L1AP, cnf, chd, cst);
-        [L1A,L1AP]          = final_datation_old (L1A,L1AP,cnf, chd, cst, ORBIT);
-    else
-        [L1A,L1AP]          = preliminary_datation (L1A, L1AP, cnf, chd, cst);
-        [L1A,L1AP]          = window_delay (L1A,L1AP, cnf, chd, cst);
-        [L1A,L1AP]          = final_datation (L1A,L1AP,cnf, chd, cst, ORBIT);
-    end
+%     if cnf.starting_from_netcdf
+        [L1A,L1AP]          = preliminary_datation(L1A, L1AP, cnf, chd, cst);
+        [L1A,L1AP]          = window_delay(L1A,L1AP, cnf, chd, cst);
+        [L1A,L1AP]          = final_datation(L1A,L1AP,cnf, chd, cst, ORBIT);
+%     else
+%         [L1A,L1AP]          = preliminary_datation_isp (L1A, L1AP, cnf, chd, cst);
+%         [L1A,L1AP]          = window_delay_isp (L1A,L1AP, cnf, chd, cst);
+%         [L1A,L1AP]          = final_datation_isp (L1A,L1AP,cnf, chd, cst, ORBIT);
+%     end
     
     if(cnf.onboard_reversion_flag) %RMC
-        [L1A,chd]               = onboard_reversion_old(L1A,filesBulk, chd,cnf,cst);
+        [L1A,chd]               = onboard_reversion(L1A,filesBulk, chd,cnf,cst);
     end
     
     %     % Flagging bursts with OB CAL pulses
