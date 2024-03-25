@@ -150,8 +150,8 @@ switch cnf_p.mission
             case 'ISD'
                 file_id=L1B_filename(17:47);
             case 'GPPICE'
-                filename_idx = strfind(L1B_filename, 'PICE_SIRS_');
-                file_id=L1B_filename(filename_idx:filename_idx+3);
+                filename_idx = strfind(L1B_filename, 'S3NGT_SIRS_');
+                file_id=L1B_filename(filename_idx:filename_idx+4);
         end
     case {'S6','JCS'}
         % --------------------- Sentinel-6 -----------------------------

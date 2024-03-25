@@ -16,9 +16,9 @@ end
 [L1BS_buffer(i_surf_stacked),L1B]   = multilooking          (L1BS_buffer(i_surf_stacked), cnf, chd, cst);
 
 % % Plot stack of beams (non-geocorrected) for each surface
-aa = fft(fftshift(L1BS_buffer(i_surf_stacked).beams_surf,2),[],2);
-imagesc(20*log10(abs(aa)))
-pause(0.1)
+% aa = fft(fftshift(L1BS_buffer(i_surf_stacked).beams_surf,2),[],2);
+% imagesc(20*log10(abs(aa)))
+% pause(0.1)
 
 % Plot L1B wfm
 % plot(10*log10(L1B.wfm_cor_i2q2))

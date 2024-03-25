@@ -224,7 +224,7 @@ netcdf.putAtt(ncid,id_aux,add_offset_att,0);
 netcdf.putAtt(ncid,id_aux,comment_att,'Instantaneous altitude rate at the Centre of Mass');
 
 
-satellite_mispointing_l1b_echo_name = 'satellite_mispointing_l1b_echo';
+satellite_mispointing_l1b_echo_name = 'satellite_mispointing_l1b_sar_echo_ku';
 id_aux = netcdf.defVar(ncid,satellite_mispointing_l1b_echo_name,int32_type,[space_3D_dimension ,nb_dimension]);
 netcdf.putAtt(ncid,id_aux,long_name_att,'Mispointing angle, measures by STRs: [1] Roll, [2] Pitch, [3] Yaw (Ku-band)');
 netcdf.putAtt(ncid,id_aux,units_att,degrees_units);

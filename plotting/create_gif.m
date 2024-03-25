@@ -1,5 +1,5 @@
 % Specify the folder containing your images
-imageFolder = 'G:\My Drive\S3NGT\codes\S3NGT_TOO1\results\plots\fitted_waveforms\';
+imageFolder = 'G:\My Drive\S3NGT\codes\S3NGT_TLI1\inputs\plots\TLI2_ongoing\';
 
 
 % Get a list of all image files in the folder
@@ -8,7 +8,7 @@ imageFiles = dir(fullfile(imageFolder, '*.png')); % Change '*.png' to the approp
 imageFiles = imageFiles(order);
 
 % Create a GIF file
-outputGIF = [imageFolder 'retrackerTOO1.gif'];
+outputGIF = [imageFolder 'S3NGT_TLI2.gif'];
 
 load('G:\My Drive\Matlab\altimetry_tools_matlab\plotting\colormaps\colormap_blues.mat');
 cmap = colormap_blues;
@@ -29,4 +29,8 @@ for i = 1:numel(imageFiles)
     end
 end
 
-disp('GIF creation complete.');
+if isempty(imageFiles)
+    disp('Error empty imageFiles')
+else
+    disp('GIF creation complete.');
+end

@@ -89,18 +89,41 @@ set_default_plot;
 [ocean_sar] =analytical_retracker_commonstruct(data, cnf_L2, chd_p, cst_p, 'LUT_f0_file',filesBulk.LUT_f0_file,...
                                                          'LUT_f1_file',filesBulk.LUT_f1_file,...
                                                          'path_Results',filesBulk.outputPath, ...
-                                                         'L1B_filename',filesBulk.filename_L1B);
-    
+                                                         'L1B_filename',filesBulk.filename_L1B);   
                                                       
 height_ssh        = ((L1B.alt - (L1B.range_ku_l1b_echo-(chd.N_samples_sar/2 - ocean_sar.Epoch.')*chd.T0_nom * cst.c / 2))+ delta_h.');
 
-figure; plot((height_ssh(1:266)),'-bo') %.' - [-1*ones(1,80) -0.697 0*ones(1,70) 0.3173 ones(1,70) 1.332 2*ones(1,43)]),'-bo')
+[ocog] = OCOG_retracker(L1B.scaled_waveforms,L1B.alt,cnf_L2);
+height_ocog        = ((L1B.alt - (L1B.range_ku_l1b_echo-(chd.N_samples_sar/2 - ocog.COG.'+1)*chd.T0_nom * cst.c / 2))+ delta_h.');
+
+
+figure; plot(L1B.lat(1:44),height_ssh(1:44),'bo')
+hold on
+plot(L1B.lat(56:58),height_ssh(56:58),'ro')
 grid
-grid minor
-xlabel('L1B records')
-ylabel('Range random error [m]')
-legend('Range random error[m]')
-ylim([-0.1 0.3])
+xlabel('Latitude')
+ylabel('Height [m]')
+legend('Sea-ice','Ocean lead')
+ylim([0 1])
+
+figure; plot(L1B.lat,height_ocog,'bo')
+grid
+xlabel('Latitude')
+ylabel('Elevation [m]')
+% legend('')
+ylim([240 250])
+
+
+
+% Extract the coordinates of the first position
+first_position = ecef(1, :);
+
+% Calculate the Euclidean distances
+distances = pdist2(first_position, ecef);
+figure; plot(L1B.lat(10:120),height_ocog(10:120),'bo')
+grid
+xlabel('Distance')
+ylabel('Elevation [m]')
 
 range_random_error = std(height_ssh(1:29*3)) / sqrt(29)
 % hold on
